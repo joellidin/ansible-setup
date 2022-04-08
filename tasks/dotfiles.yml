@@ -1,0 +1,55 @@
+- name: Cloning .dotfiles
+  ansible.builtin.git:
+    repo: 'https://github.com/joellidin/dotfiles.git'
+    dest: "{{ lookup('env', 'HOME') }}/.dotfiles"
+    bare: yes
+    update: yes
+    accept_hostkey: yes
+    version: main
+  tags:
+    - install
+    - dotfiles
+
+- name: Create Backup Directory for Configs
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.config-backup"
+    state: directory
+  tags:
+    - install
+    - dotfiles
+
+- name: Backup Existing Configs
+  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout 2>&1 | egrep '\s+\.' | awk {'print $1'} | xargs -I{} mv {} .config-backup/{}
+  tags:
+    - install
+    - dotfiles
+
+- name: Check if Backup Directory is Empty
+  find:
+    paths: "{{ lookup('env', 'HOME') }}/.config-backup"
+  register: filesFound
+  tags:
+    - install
+    - dotfiles
+
+- name: Remove Backup Direcotry
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.config-backup"
+    state: absent
+  when: filesFound.matched == 0
+  tags:
+    - install
+    - dotfiles
+
+
+- name: Install Dotfiles Configs
+  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout
+  tags:
+    - install
+    - dotfiles
+
+- name: Hide Untracked Files
+  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} config --local status.showUntrackedFiles no
+  tags:
+    - install
+    - dotfiles

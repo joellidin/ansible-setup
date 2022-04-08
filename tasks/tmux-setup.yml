@@ -1,0 +1,36 @@
+- name: Remove tmux
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+    state: absent
+  tags:
+    - install
+    - productivity
+    - tmux
+
+- name: Clone Tmux
+  ansible.builtin.git:
+    repo: "https://github.com/tmux/tmux.git"
+    dest: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+  tags:
+    - install
+    - productivity
+    - tmux
+
+- name: Configure Tmux
+  shell: sh autogen.sh && ./configure && make
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+  tags:
+    - install
+    - productivity
+    - tmux
+
+- name: Install Tmux
+  make:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+    target: install
+  become: yes
+  tags:
+    - install
+    - productivity
+    - tmux

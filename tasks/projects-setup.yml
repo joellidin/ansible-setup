@@ -1,0 +1,47 @@
+- name: Install lakefs credentials
+  import_tasks: tasks/lakectl-setup.yml
+  tags:
+    - work
+    - lakefs
+    - projects
+
+- name: Create Directory for project
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/Documents"
+    state: directory
+  tags:
+    - work
+    - projects
+
+- name: Clone into project
+  shell: "gh repo clone volvo-cars/{{ project_name }}"
+  args:
+    chdir:
+      "{{ lookup('env', 'HOME') }}/Documents"
+  tags:
+    - work
+    - projects
+
+- name: Install python version
+  shell: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/bin/pyenv install 3.9.9"
+  tags:
+    - work
+    - projects
+
+- name: Install environment
+  shell: "{{ lookup('env', 'HOME') }}/.local/bin/pipenv install --python 3.9.9 -e '.[dev]'"
+  args:
+    chdir:
+      "{{ lookup('env', 'HOME') }}/Documents/{{ project_name }}"
+  tags:
+    - work
+    - projects
+
+- name: Install pre-commit
+  shell: "{{ lookup('env', 'HOME') }}/.local/bin/pipenv run pre-commit install"
+  args:
+    chdir:
+      "{{ lookup('env', 'HOME') }}/Documents/{{ project_name }}"
+  tags:
+    - work
+    - projects

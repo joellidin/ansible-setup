@@ -1,0 +1,36 @@
+- name: regolith-linux ppa (ppa:regolith-linux/release)
+  become: true
+  apt_repository:
+   repo: ppa:regolith-linux/release
+   state: present
+   update_cache: True
+  tags:
+    - install
+    - productivity
+
+- name: git-core ppa (ppa:git-core/ppa)
+  become: true
+  apt_repository:
+   repo: ppa:git-core/ppa
+   state: present
+   update_cache: True
+  tags:
+    - install
+    - productivity
+
+- name: Install Productivity Packages
+  become: true
+  package:
+    name: ["xcape", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "wget", "git"]
+  tags:
+    - install
+    - productivity
+
+- name: Install Git Delta
+  shell: curl -L -s https://api.github.com/repos/dandavison/delta/releases/latest | grep -o -E "https://(.*)git-delta_(.*)_amd64.deb" | xargs -n 1 curl -fsSL -O && ls | grep -o -E "git-delta_(.*)amd64.deb" | xargs -n 1 dpkg -i 
+  args:
+    chdir: /tmp
+  become: true
+  tags:
+    - install
+    - productivity

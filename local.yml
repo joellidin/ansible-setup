@@ -1,0 +1,44 @@
+- hosts: localhost
+  vars:
+    src_lakectl: "./encrypt_data/.lakectl.yaml"
+    src_gh_hosts: "./encrypt_data/hosts.yml"
+    src_gh_config: "./encrypt_data/config.yml"
+    dest_lakectl: "{{ lookup('env', 'HOME') }}/.lakectl.yaml"
+    project_name: !vault |
+        $ANSIBLE_VAULT;1.1;AES256
+        33623062633734373635663363623961613334383962623664343037653938363233343461316361
+        6264626636623630623864326232373038323637366633340a303466353861666238333463383531
+        61666530323665623438376436373135643563356264303433336166636334633762393338666531
+        3139663230626264310a383132316135326162666164373235643363653333646565616366373135
+        37386661386633366463303863643439356235346134336638623665396234653435
+  pre_tasks:
+  - name: Update Apt
+    become: true
+    apt:
+      force_apt_get: true
+      update_cache: true
+      state: present
+    tags:
+      - install
+      - core
+  environment:
+    CARGO_HOME: "{{ lookup('env', 'HOME') }}/.config/cargo"
+    RUSTUP_HOME: "{{ lookup('env', 'HOME') }}/.local/share/rustup"
+    N_PREFIX: "{{ lookup('env', 'HOME') }}/.local/share/n"
+    PYENV_ROOT: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
+    NPM_CONFIG_USERCONFIG: "{{ lookup('env', 'HOME') }}/.config/npm/npmrc"
+  tasks:
+    - import_tasks: tasks/productivity-tools.yml
+    - import_tasks: tasks/core-setup.yml
+    - import_tasks: tasks/zsh-setup.yml
+    - import_tasks: tasks/dotfiles.yml
+    - import_tasks: tasks/rust-setup.yml
+    - import_tasks: tasks/python-setup.yml
+    - import_tasks: tasks/node-setup.yml
+    - import_tasks: tasks/nvim-setup.yml
+    - import_tasks: tasks/st-setup.yml
+    - import_tasks: tasks/eww-setup.yml
+    - import_tasks: tasks/tmux-setup.yml
+    - import_tasks: tasks/gh-setup.yml
+    - import_tasks: tasks/slack-setup.yml
+    - import_tasks: tasks/projects-setup.yml

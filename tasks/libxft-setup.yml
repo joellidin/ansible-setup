@@ -1,0 +1,30 @@
+- name: Download libXft patch
+  get_url:
+    url: https://gitlab.freedesktop.org/xorg/lib/libxft/-/merge_requests/1.patch
+    dest: /tmp/libxft.patch
+
+- name: Clone libxft
+  ansible.builtin.git:
+    repo: "https://gitlab.freedesktop.org/xorg/lib/libxft.git"
+    dest: /tmp/libxft
+
+- name: Apply patch to libxft
+  ansible.posix.patch:
+    src: /tmp/libxft.patch
+    basedir: /tmp/libxft
+    strip: 1
+
+- name: Configure libxft
+  shell: ./autogen.sh && ./configure --prefix=/usr --sysconfdir=/etc --disable-statis && make
+  args:
+    chdir: /tmp/libxft
+
+- name: Install patched libxft
+  shell: make install
+  become: true
+  args:
+    chdir: /tmp/libxft
+
+- name: Symlink the patched libxft
+  shell: ln -sf /usr/lib/libXft.so /usr/lib/x86_64-linux-gnu/libXft.so.2.3.4 && ldconfig
+  become: true

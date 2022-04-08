@@ -1,0 +1,71 @@
+- name: Remove Neovim
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+    state: absent
+  tags:
+    - install
+    - neovim
+
+- name: Clone Neovim
+  ansible.builtin.git:
+    repo: 'https://github.com/neovim/neovim.git'
+    dest: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+  tags:
+    - install
+    - neovim
+
+- name: Build Neovim
+  shell: make CMAKE_BUILD_TYPE=Release
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+  tags:
+    - install
+    - neovim
+
+- name: Install Neovim
+  become: true
+  shell: make install
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+  tags:
+    - install
+    - neovim
+
+- name: Install StyLua
+  shell: . {{ lookup('env', 'HOME') }}/.config/cargo/env && cargo install stylua
+  tags:
+    - install
+    - neovim
+
+- name: Create Databases Directory for Neovim
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME')}}/.local/share/nvim/databases"
+    state: directory
+  tags:
+    - install
+    - dotfiles
+    - neovim
+
+- name: Create Telescope Database File
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME')}}/.local/share/nvim/databases/telescope_history.sqlite3"
+    state: touch
+  tags:
+    - install
+    - dotfiles
+    - neovim
+
+- name: Install Neovim Plugins
+  shell: nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+  tags:
+    - install
+    - dotfiles
+    - neovim
+
+- name: Install Sumneko-lua
+  import_tasks: tasks/sumneko-lua-setup.yml
+  tags:
+    - install
+    - dotfiles
+    - neovim
+    - sumneko-lua

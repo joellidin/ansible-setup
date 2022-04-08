@@ -1,0 +1,36 @@
+- name: Remove pyenv
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
+    state: absent
+  tags:
+    - install
+    - python
+
+- name: Clone pyenv
+  ansible.builtin.git:
+    repo: "https://github.com/yyuu/pyenv.git"
+    dest: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
+  tags:
+    - install
+    - python
+
+- name: Install pyenv
+  shell: src/configure && make -C src
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
+  tags:
+    - install
+    - python
+
+- name: Install Virtualenv
+  shell: pip3 install virtualenv virtualenvwrapper
+  become: true
+  tags:
+    - install
+    - python
+
+- name: Install Pipenv
+  shell: pip3 install --upgrade pipenv
+  tags:
+    - install
+    - python

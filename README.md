@@ -1,0 +1,11 @@
+# Todo
+- [x] Fix libXft  <!-- Done, but can maybe be done in a better way? -->
+- [ ] Add Fonts
+- [x] Test tmux <!-- Works now -->
+- [ ] Add updatedb
+- [ ] Bootstrap installation of language servers (Pyright, rust-lang)
+- [ ] Make sure i3 reads zsh instead of bash ($TERMINAL variable)
+- [ ] Install go
+- [ ] Install wget (Is available on the system but not detected by LSPInstall)
+- [ ] LspInstall seems to not be working
+- [ ] Install secrets for projects (.env, private keys for lakefs)

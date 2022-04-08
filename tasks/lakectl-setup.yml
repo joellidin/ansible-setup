@@ -1,0 +1,32 @@
+- name: Get Lakectl download url
+  uri:
+    url: https://api.github.com/repos/treeverse/lakeFS/releases/latest
+    return_content: true
+  register: lakectl_latest
+
+- name: Download Lakectl tarball
+  loop: "{{ lakectl_latest.json.assets }}"
+  when: "'_Linux_x86_64.tar.gz' in item.name"
+  get_url:
+    url: "{{ item.browser_download_url }}"
+    dest: /tmp/lakectl.tar.gz
+  become: true
+
+- name: Unzip Lakectl tarball
+  ansible.builtin.unarchive:
+    src: /tmp/lakectl.tar.gz
+    dest: /tmp
+  become: true
+
+- name: Copy lakectl to /usr/local/bin
+  ansible.builtin.copy:
+    src: /tmp/lakectl
+    dest: /usr/local/bin/lakectl
+    mode: 0755
+  become: true
+
+- name: Setup .lakectl.yaml
+  copy:
+    src: "{{ src_lakectl }}"
+    dest: "{{ dest_lakectl }}"
+    mode: 0644

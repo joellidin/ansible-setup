@@ -1,0 +1,32 @@
+- name: check if cargo is installed
+  shell: which cargo
+  register: cargo_exists
+  ignore_errors: yes
+  tags:
+    - install
+    - rust
+
+- name: Download Installer
+  when: cargo_exists is failed
+  get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/sh.rustup.rs
+    mode: '0755'
+    force: 'yes'
+  tags:
+    - install
+    - rust
+
+- name: Install Rust/Cargo
+  when: cargo_exists is failed
+  shell: /tmp/sh.rustup.rs -y
+  tags:
+    - install
+    - rust
+
+- name: Install nightly
+  when: cargo_exists is failed
+  shell: . {{ lookup('env', 'HOME') }}/.config/cargo/env && rustup default nightly
+  tags:
+    - install
+    - rust

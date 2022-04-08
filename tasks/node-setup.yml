@@ -1,0 +1,26 @@
+- name: Install nodejs and npm
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+  tags:
+    - install
+    - node
+
+- name: Npmjs global settings
+  shell: npm config set prefix '{{ lookup('env', 'HOME') }}/.local/share/npm'
+  tags:
+  - install
+  - node
+
+- name: Install N
+  shell: npm install -g n
+  tags:
+    - install
+    - node
+
+- name: Install correct version of Node
+  shell: "{{ lookup('env', 'HOME') }}/.local/share/npm/bin/n 14"
+  tags:
+    - install
+    - node
+

@@ -1,0 +1,52 @@
+- name: Download Gpg Key
+  shell: curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+  become: yes
+  tags:
+    - install
+    - productivity
+
+- name: Download binary
+  shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+  become: yes
+  tags:
+    - install
+    - productivity
+
+- name: Install gh-cli
+  package:
+    update-cache: True
+    name:
+      gh
+  become: yes
+  tags:
+    - install
+    - productivity
+
+- name: Create gh Config Directory
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME')}}/.config/gh"
+    state: directory
+  tags:
+    - install
+    - dotfiles
+    - productivity
+
+- name: Add gh config.yml
+  copy:
+    src: "{{ src_gh_config }}"
+    dest: "{{ lookup('env', 'HOME') }}/.config/gh/config.yml"
+    mode: 0600
+  tags:
+    - install
+    - dotfiles
+    - productivity
+
+- name: Add gh hosts.yml
+  copy:
+    src: "{{ src_gh_hosts }}"
+    dest: "{{ lookup('env', 'HOME') }}/.config/gh/hosts.yml"
+    mode: 0600
+  tags:
+    - install
+    - dotfiles
+    - productivity
