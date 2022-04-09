@@ -6,14 +6,21 @@
     - install
     - node
 
-- name: Npmjs global settings
-  shell: npm config set prefix '{{ lookup('env', 'HOME') }}/.local/share/npm'
+- name: Install Temporary npm Configs
+  block:
+    - name: Set prefix
+      shell: npm config set prefix "{{ lookup('env', 'HOME') }}/.local/share/npm"
+
+    - name: Set cache
+      shell: npm config set cache "{{ lookup('env', 'HOME') }}/.cache/npm"
   tags:
-  - install
-  - node
+    - install
+    - node
 
 - name: Install N
-  shell: npm install -g n
+  npm:
+    name: n
+    global: yes
   tags:
     - install
     - node
@@ -24,3 +31,10 @@
     - install
     - node
 
+- name: Remove Temporary Configs
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.config/npm/npmrc"
+    state: absent
+  tags:
+    - install
+    - node
