@@ -1,0 +1,50 @@
+- name: Set golang version
+  set_fact:
+    new_go_version: "1.18"
+  tags:
+    - install
+    - go
+
+- name: Check current golang version
+  command: bash -c "/usr/local/go/bin/go version|sed -e 's/go version go//g'|cut -d' ' -f1"
+  ignore_errors: true
+  register: go_version
+  changed_when: false
+  tags:
+    - install
+    - go
+
+- name: Continue only when version is older
+  fail: msg="Version already exists"
+  when: go_version.stdout != "" and "go_version.stdout | version_compare('{{new_go_version}}', operator='ge', strict=True)"
+  tags:
+    - install
+    - go
+
+- name: Download golang tar 
+  get_url:
+    url: "https://storage.googleapis.com/golang/go{{new_go_version}}.linux-amd64.tar.gz"
+    dest: /tmp
+    mode: 0440
+  tags:
+    - install
+    - go
+   
+- name: Remove old installation of Go
+  file:
+    path: /usr/local/go
+    state: absent
+  become: true
+  tags:
+    - install
+    - go
+
+- name: Extract the Go tarball
+  unarchive:
+    src: "/tmp/go{{new_go_version}}.linux-amd64.tar.gz"
+    dest: /usr/local
+    copy: no
+  become: true
+  tags:
+    - install
+    - go
