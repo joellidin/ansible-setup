@@ -43,3 +43,13 @@
     - import_tasks: tasks/gh-setup.yml
     - import_tasks: tasks/slack-setup.yml
     - import_tasks: tasks/projects-setup.yml
+  post_tasks:
+  - name: Update Apt
+    become: true
+    apt:
+      force_apt_get: true
+      update_cache: true
+      state: present
+    tags:
+      - install
+      - core

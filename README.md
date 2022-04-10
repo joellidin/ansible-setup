@@ -3,9 +3,9 @@
 - [ ] Add Fonts
 - [x] Test tmux <!-- Works now -->
 - [ ] Add updatedb
-- [ ] Bootstrap installation of language servers (Pyright, rust-lang)
+- [x] Bootstrap installation of language servers (Pyright, rust-lang)
 - [ ] Make sure i3 reads zsh instead of bash ($TERMINAL variable)
 - [x] Install go
-- [ ] Install wget (Is available on the system but not detected by LSPInstall)
+- [x] Install wget (Is available on the system but not detected by LSPInstall)
 - [ ] LspInstall seems to not be working
 - [ ] Install secrets for projects (.env, private keys for snowflake)

@@ -15,7 +15,7 @@
     - neovim
 
 - name: Build Neovim
-  shell: make CMAKE_BUILD_TYPE=Release
+  shell: make CMAKE_BUILD_TYPE=RelWithDebInfo
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
   tags:
