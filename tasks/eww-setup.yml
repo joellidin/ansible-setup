@@ -21,3 +21,13 @@
   tags:
     - install
     - eww
+
+- name: Symlink to /usr/bin
+  become: true
+  file:
+    src: "{{ lookup('env', 'HOME') }}/.local/src/eww/target/release/eww" 
+    dest: /usr/bin/eww
+    state: link
+  tags:
+    - install
+    - eww

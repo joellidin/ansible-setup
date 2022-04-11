@@ -44,11 +44,12 @@
     - import_tasks: tasks/slack-setup.yml
     - import_tasks: tasks/projects-setup.yml
   post_tasks:
-  - name: Update Apt
+  - name: Upgrade Apt
     become: true
     apt:
       force_apt_get: true
       update_cache: true
+      upgrade: yes
       state: present
     tags:
       - install
