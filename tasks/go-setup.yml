@@ -16,7 +16,7 @@
 
 - name: Continue only when version is older
   fail: msg="Version already exists"
-  when: go_version.stdout != "" and "go_version.stdout | version_compare('{{new_go_version}}', operator='ge', strict=True)"
+  when: go_version.stdout != "" and "go_version.stdout is version_compare('new_go_version', operator='ge', strict=True)"
   tags:
     - install
     - go
