@@ -1,0 +1,3 @@
+[submodule "encrypt-data"]
+	path = encrypt-data
+	url = https://github.com/joellidin/encrypt-data
