@@ -1,7 +1,8 @@
 - hosts: localhost
+  connection: local
   vars:
     src_gh_hosts: "./hosts.yml"
-    src_gh_config: "./encrypt_data/config.yml"
+    src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
   - name: Update Apt
     become: true
