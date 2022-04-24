@@ -12,3 +12,4 @@
 - [ ] Install secrets for projects (.env, private keys for snowflake)
 - [ ] Add gopass settings to oh-my-zsh (completion)
 - [ ] Add gopass setup
+- [ ] Add scdaemon install (for yubikey on Ubuntu)
