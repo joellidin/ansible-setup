@@ -21,7 +21,15 @@
 - name: Install Productivity Packages
   become: true
   package:
-    name: ["xcape", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "wget", "git"]
+    name: ["xcape", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "wget", "git", "fd-find"]
+  tags:
+    - install
+    - productivity
+
+- name: Install Packages for Yubico
+  become: true
+  package:
+    name: ["scdaemon", "yubikey-manager", "libpam-yubico", "libpam-u2f", "libu2f-udev"]
   tags:
     - install
     - productivity
