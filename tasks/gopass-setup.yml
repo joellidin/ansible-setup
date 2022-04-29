@@ -1,0 +1,32 @@
+- name: Download gopass deb package
+  get_url:
+    url: https://github.com/gopasspw/gopass/releases/download/v1.14.0/gopass_1.14.0_linux_amd64.deb
+    dest: /tmp
+  tags:
+    - install
+    - gopass
+
+- name: Install gopass
+  become: true
+  apt:
+    deb: /tmp/gopass_1.14.0_linux_amd64.deb
+  tags:
+    - install
+    - gopass
+
+- name: Change owner and group of gopass binary
+  become: true
+  ansible.builtin.file:
+    path: /usr/bin/gopass
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+  tags:
+    - install
+    - gopass
+
+- name: Move gopass to user
+  become: true
+  command: "mv /usr/bin/gopass /home/{{ ansible_user_id }}/.local/bin/"
+  tags:
+    - install
+    - gopass

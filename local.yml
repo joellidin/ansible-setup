@@ -27,6 +27,7 @@
     - import_tasks: tasks/python-setup.yml
     - import_tasks: tasks/node-setup.yml
     - import_tasks: tasks/go-setup.yml
+    - import_tasks: tasks/gopass-setup.yml
     - import_tasks: tasks/dotfiles.yml
     - import_tasks: tasks/nvim-setup.yml
     - import_tasks: tasks/st-setup.yml
