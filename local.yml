@@ -34,6 +34,7 @@
     - import_tasks: tasks/eww-setup.yml
     - import_tasks: tasks/tmux-setup.yml
     - import_tasks: tasks/gh-setup.yml
+    - import_tasks: tasks/brave-setup.yml
     - import_tasks: tasks/slack-setup.yml
     - import_tasks: tasks/projects-setup.yml
   post_tasks:

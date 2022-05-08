@@ -16,3 +16,6 @@
 - [ ] Add pinentry-dmenu
 <!-- git clone https://github.com/ritze/pinentry-dmenu -->
 <!-- sudo apt install libgpgme-dev libassuan-dev -->
+
+<!-- Clean up zshrc and zcompdump -->
+<!-- mkdir $XDG_CACHE_HOME/zsh -->
