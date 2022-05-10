@@ -7,6 +7,7 @@
     - neovim
 
 - name: Clone Neovim
+  become: true
   ansible.builtin.git:
     repo: 'https://github.com/neovim/neovim.git'
     dest: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
@@ -15,6 +16,7 @@
     - neovim
 
 - name: Build Neovim
+  become: true
   shell: make CMAKE_BUILD_TYPE=RelWithDebInfo
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"

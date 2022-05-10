@@ -7,6 +7,7 @@
     - st
 
 - name: Clone st
+  become: true
   ansible.builtin.git:
     repo: 'https://github.com/joellidin/st.git'
     dest: "{{ lookup('env', 'HOME') }}/.local/src/st"
@@ -15,6 +16,7 @@
     - st
 
 - name: Build st
+  become: true
   shell: make
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/st"

@@ -8,6 +8,7 @@
     - tmux
 
 - name: Clone Tmux
+  become: true
   ansible.builtin.git:
     repo: "https://github.com/tmux/tmux.git"
     dest: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
@@ -17,6 +18,7 @@
     - tmux
 
 - name: Configure Tmux
+  become: true
   shell: sh autogen.sh && ./configure && make
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
@@ -26,10 +28,10 @@
     - tmux
 
 - name: Install Tmux
+  become: true
   make:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
     target: install
-  become: yes
   tags:
     - install
     - productivity

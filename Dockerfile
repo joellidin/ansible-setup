@@ -1,4 +1,4 @@
-FROM ubuntu:focal as base
+FROM ubuntu:jammy as base
 WORKDIR /usr/local/bin
 ENV DEBIAN_FRONTEND=noninteractive
 
