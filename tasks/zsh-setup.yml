@@ -2,11 +2,12 @@
   package:
     name:
       - zsh
-  become: yes
+  become: true
   tags: &tags_for_zsh_tasks [ 'install', 'productivity', 'dotfiles', 'zsh' ]
     
 - name: Change shell to zsh
-  shell: chsh -s $(which zsh)
+  become: true
+  shell: "chsh -s $(which zsh) {{ ansible_user_id }}"
   tags: *tags_for_zsh_tasks
 
 - name: Check that oh-my-zsh exists

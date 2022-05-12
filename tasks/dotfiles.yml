@@ -19,7 +19,7 @@
     - dotfiles
 
 - name: Backup Existing Configs
-  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout 2>&1 | egrep '\s+\.' | awk {'print $1'} | xargs -I{} mv {} .config-backup/{}
+  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout 2>&1 | egrep '\s+\.' | awk {'print $1'} | xargs -I{} mv {{ lookup('env', 'HOME') }}/{} {{ lookup('env', 'HOME') }}/.config-backup/{}
   tags:
     - install
     - dotfiles
