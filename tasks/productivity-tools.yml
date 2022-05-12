@@ -30,7 +30,7 @@
 - name: Install Productivity Packages
   become: true
   package:
-    name: ["curl", "xcape", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "wget", "git", "fd-find"]
+    name: ["curl", "xcape", "xdotool", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "wget", "git", "fd-find"]
   tags:
     - install
     - productivity
@@ -50,4 +50,22 @@
   become: true
   tags:
     - install
+    - productivity
+
+- name: Copy public key
+  copy:
+    src: "./encrypt-data/pub.key"
+    dest: /tmp/pub.key
+    mode: preserve
+  tags:
+    - install
+    - gpg
+    - productivity
+
+
+- name: Import Yubikey gpg key
+  shell: gpg --import /tmp/pub.key
+  tags:
+    - install
+    - gpg
     - productivity

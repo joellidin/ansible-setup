@@ -26,7 +26,38 @@
 
 - name: Move gopass to user
   become: true
-  command: "mv /usr/bin/gopass /home/{{ ansible_user_id }}/.local/bin/"
+  shell: "mv /usr/bin/gopass /home/{{ ansible_user_id }}/.local/bin/"
+  tags:
+    - install
+    - gopass
+
+- name: Add completion
+  block:
+    - name: Create gopass directory in oh-my-zsh
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/.local/src/oh-my-zsh/plugins/gopass"
+        state: directory
+
+    - name: Add gopass completion
+      shell: "{{ lookup('env', 'HOME') }}/.local/bin/gopass completion zsh > _gopass"
+      args:
+        chdir: "{{ lookup('env', 'HOME') }}/.local/src/oh-my-zsh/plugins/gopass"
+  tags:
+    - install
+    - gopass
+
+
+- name: Install default password store
+  block:
+    - name: Create gopass directory
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"
+        state: directory
+
+    - name: clone into repo
+      ansible.builtin.git:
+        repo: "https://github.com/joellidin/private-pass.git"
+        dest: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"
   tags:
     - install
     - gopass

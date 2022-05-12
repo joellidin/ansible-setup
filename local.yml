@@ -27,13 +27,13 @@
     - import_tasks: tasks/python-setup.yml
     - import_tasks: tasks/node-setup.yml
     - import_tasks: tasks/go-setup.yml
-    - import_tasks: tasks/gopass-setup.yml
     - import_tasks: tasks/dotfiles.yml
     - import_tasks: tasks/nvim-setup.yml
     - import_tasks: tasks/st-setup.yml
     - import_tasks: tasks/eww-setup.yml
     - import_tasks: tasks/tmux-setup.yml
     - import_tasks: tasks/gh-setup.yml
+    - import_tasks: tasks/gopass-setup.yml
     - import_tasks: tasks/brave-setup.yml
     - import_tasks: tasks/slack-setup.yml
     - import_tasks: tasks/projects-setup.yml
