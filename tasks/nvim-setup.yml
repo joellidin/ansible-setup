@@ -1,4 +1,5 @@
 - name: Remove Neovim
+  become: true
   ansible.builtin.file:
     path: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
     state: absent
