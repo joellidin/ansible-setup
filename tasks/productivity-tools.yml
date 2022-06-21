@@ -1,7 +1,7 @@
 - name: regolith-linux
   become: true
   block:
-    - name: Download foo.conf
+    - name: Download regolith key
       get_url:
         url: https://regolith-linux.github.io/package-repo/regolith.key
         dest: /etc/apt/trusted.gpg.d/regolith.asc
