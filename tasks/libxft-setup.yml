@@ -1,6 +1,11 @@
-- name: Download libXft patch
-  get_url:
-    url: https://gitlab.freedesktop.org/xorg/lib/libxft/-/merge_requests/1.patch
+# - name: Copy libXft patch
+#   copy:
+#     url: https://gitlab.freedesktop.org/xorg/lib/libxft/-/merge_requests/1.patch
+#     dest: /tmp/libxft.patch
+#
+- name: Copy patch file
+  copy:
+    src: "libxft.patch"
     dest: /tmp/libxft.patch
 
 - name: Clone libxft
