@@ -7,7 +7,8 @@ RUN apt-get upgrade -y
 RUN apt-get install -y software-properties-common curl git build-essential 
 RUN apt-add-repository -y ppa:ansible/ansible
 RUN apt-get update 
-RUN apt-get install -y curl git sudo ansible build-essential 
+RUN apt-get install -y curl git sudo ansible build-essential
+RUN apt-get install cron
 RUN apt-get clean autoclean 
 RUN apt-get autoremove --yes
 
