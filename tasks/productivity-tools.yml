@@ -2,6 +2,9 @@
   become: true
   package:
     name: wget
+  tags:
+    - install
+    - productivity
 
 - name: regolith-linux
   become: true
