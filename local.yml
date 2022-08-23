@@ -30,6 +30,7 @@
     - import_tasks: tasks/dotfiles.yml
     - import_tasks: tasks/nvim-setup.yml
     - import_tasks: tasks/st-setup.yml
+    - import_tasks: tasks/i3blocks-setup.yml
     - import_tasks: tasks/eww-setup.yml
     - import_tasks: tasks/tmux-setup.yml
     - import_tasks: tasks/gh-setup.yml

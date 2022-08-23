@@ -1,0 +1,42 @@
+- name: Remove i3blocks repository
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.local/src/i3blocks"
+    state: absent
+  tags:
+    - install
+    - i3blocks
+
+- name: Clone i3blocks
+  ansible.builtin.git:
+    repo: https://github.com/vivien/i3blocks    
+    dest: "{{ lookup('env', 'HOME') }}/.local/src/i3blocks"
+  tags:
+    - install
+    - i3blocks
+
+- name: Configure i3blocks
+  shell: |
+    ./autogen.sh
+    ./configure
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/i3blocks"
+  tags:
+    - install
+    - i3blocks
+
+- name: Build i3blocks
+  shell: make
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/i3blocks"
+  tags:
+    - install
+    - i3blocks
+
+- name: Install i3blocks
+  become: true
+  shell: make clean install
+  args:
+    chdir: "{{ lookup('env', 'HOME') }}/.local/src/i3blocks"
+  tags:
+    - install
+    - i3blocks
