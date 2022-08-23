@@ -1,24 +1,7 @@
-# - name: Copy libXft patch
-#   copy:
-#     url: https://gitlab.freedesktop.org/xorg/lib/libxft/-/merge_requests/1.patch
-#     dest: /tmp/libxft.patch
-#
-- name: Copy patch file
-  copy:
-    src: "libxft.patch"
-    dest: /tmp/libxft.patch
-
 - name: Clone libxft
   ansible.builtin.git:
     repo: "https://gitlab.freedesktop.org/xorg/lib/libxft.git"
     dest: /tmp/libxft
-
-- name: Apply patch to libxft
-  ansible.posix.patch:
-    src: /tmp/libxft.patch
-    basedir: /tmp/libxft
-    strip: 1
-
 - name: Configure libxft
   shell: ./autogen.sh && ./configure --prefix=/usr --sysconfdir=/etc --disable-statis && make
   args:
