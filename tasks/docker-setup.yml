@@ -1,0 +1,49 @@
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/
+    state: directory
+  tags:
+    - install
+    - docker
+
+- name: Add Docker GPG Key
+  shell: | 
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg |\
+    sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  tags:
+    - install
+    - docker
+
+- name: Add Docker Repository
+  shell: | 
+    echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  tags:
+    - install
+    - docker
+
+- name: Update apt and install docker packages
+  become: True
+  apt:
+    name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"]
+    state: latest
+    update_cache: true
+  tags:
+    - install
+    - docker
+
+- name: Add docker group
+  become: True
+  group:
+    name: docker
+    state: present
+  tags:
+    - install
+    - docker
+
+- name: Add user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
