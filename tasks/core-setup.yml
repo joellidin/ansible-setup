@@ -41,3 +41,10 @@
   - install
   - python
   - core
+
+- name: Install fonts
+  import_tasks: tasks/fonts-setup.yml
+  tags:
+    - install
+    - core
+    - fonts

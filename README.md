@@ -1,6 +1,6 @@
 # Todo
 - [x] Fix libXft  <!-- Done, but can maybe be done in a better way? -->
-- [ ] Add Fonts
+- [x] Add Fonts
 - [x] Add docker setup task
 - [x] Test tmux <!-- Works now -->
 - [x] Add updatedb

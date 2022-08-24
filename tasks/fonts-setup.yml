@@ -1,0 +1,25 @@
+- name: Create fonts folder if it does not exist
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME')}}/.local/share/fonts"
+    state: directory
+  tags:
+    - install
+    - core
+    - fonts
+
+- name: Copy fonts to fonts folder
+  copy:
+    src: ./fonts/
+    dest: "{{ lookup('env', 'HOME') }}/.local/share/fonts"
+    mode: preserve
+  tags:
+    - install
+    - core
+    - fonts
+
+- name: Install fonts
+  shell: fc-cache -frv
+  tags:
+    - install
+    - core
+    - fonts
