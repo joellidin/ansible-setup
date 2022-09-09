@@ -1,0 +1,27 @@
+- name: Download the Google Cloud public signing key
+  shell: curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  become: true
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Add the Kubernetes apt repository
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | \
+    sudo tee /etc/apt/sources.list.d/kubernetes.list
+  become: true
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Update apt and install kubectl
+  become: true
+  apt:
+    update_cache: yes
+    name: kubectl
+  tags:
+    - install
+    - productivity
+    - kubectl
