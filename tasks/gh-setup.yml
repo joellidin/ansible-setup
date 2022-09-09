@@ -14,7 +14,7 @@
 
 - name: Install gh-cli
   package:
-    update-cache: True
+    update-cache: true
     name:
       gh
   become: true

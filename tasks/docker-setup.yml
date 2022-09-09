@@ -24,7 +24,7 @@
     - docker
 
 - name: Update apt and install docker packages
-  become: True
+  become: true
   apt:
     name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"]
     state: latest
@@ -34,7 +34,7 @@
     - docker
 
 - name: Add docker group
-  become: True
+  become: true
   group:
     name: docker
     state: present
@@ -43,7 +43,7 @@
     - docker
 
 - name: Add user to docker group
-  become: True
+  become: true
   ansible.builtin.user:
     name: "{{ ansible_user_id }}"
     groups: docker

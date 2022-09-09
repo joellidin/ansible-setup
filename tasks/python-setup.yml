@@ -33,6 +33,18 @@
     - install
     - python
 
+- name: Install python 3.10.6
+  shell: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/bin/pyenv install 3.10.6"
+  tags:
+    - install
+    - python
+
+- name: Set python 3.10.6 globally
+  shell: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/bin/pyenv global 3.10.6"
+  tags:
+    - install
+    - python
+
 - name: Install Virtualenv
   shell: pip3 install virtualenv virtualenvwrapper
   become: true
@@ -41,7 +53,10 @@
     - python
 
 - name: Install Pipenv
-  shell: pip3 install --upgrade pipenv
+  pip:
+    name: pipenv
+    extra_args: --upgrade
+    executable: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/shims/pip"
   tags:
     - install
     - python

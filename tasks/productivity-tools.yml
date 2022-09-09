@@ -19,20 +19,21 @@
         echo deb "[arch=amd64 signed-by=/usr/share/keyrings/regolith-archive-keyring.gpg] \
         https://regolith-desktop.org/release-ubuntu-jammy-amd64 jammy main" | \
         sudo tee /etc/apt/sources.list.d/regolith.list
-
-    - name: Update apt-get repo and cache
-      apt: 
-        update_cache: yes
   tags:
     - install
     - productivity
 
 - name: git-core ppa (ppa:git-core/ppa)
   become: true
-  apt_repository:
-   repo: ppa:git-core/ppa
-   state: present
-   update_cache: True
+  shell: add-apt-repository ppa:git-core/ppa -y
+  tags:
+    - install
+    - productivity
+
+- name: Update apt-get repo and cache
+  become: true
+  apt: 
+    update_cache: yes
   tags:
     - install
     - productivity
