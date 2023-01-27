@@ -26,7 +26,7 @@
     - node
 
 - name: Install correct version of Node
-  shell: "{{ lookup('env', 'HOME') }}/.local/share/npm/bin/n 14"
+  shell: "{{ lookup('env', 'HOME') }}/.local/share/npm/bin/n 16"
   tags:
     - install
     - node

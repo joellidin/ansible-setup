@@ -1,6 +1,6 @@
 - name: Set golang version
   set_fact:
-    new_go_version: "1.18"
+    new_go_version: "1.19.5"
   tags:
     - install
     - go
@@ -23,7 +23,7 @@
 
 - name: Download golang tar 
   get_url:
-    url: "https://storage.googleapis.com/golang/go{{new_go_version}}.linux-amd64.tar.gz"
+    url: "https://go.dev/dl/go{{new_go_version}}.linux-amd64.tar.gz"
     dest: /tmp
     mode: 0440
   tags:
