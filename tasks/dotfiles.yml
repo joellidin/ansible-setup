@@ -1,6 +1,6 @@
 - name: Cloning .dotfiles
   ansible.builtin.git:
-    repo: 'https://github.com/joellidin/dotfiles.git'
+    repo: "https://github.com/joellidin/dotfiles.git"
     dest: "{{ lookup('env', 'HOME') }}/.dotfiles"
     bare: yes
     update: yes
@@ -40,7 +40,6 @@
   tags:
     - install
     - dotfiles
-
 
 - name: Install Dotfiles Configs
   shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout

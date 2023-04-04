@@ -26,7 +26,7 @@
 - name: Install zsh-autosuggestions
   ansible.builtin.git:
     repo: "https://github.com/zsh-users/zsh-autosuggestions.git"
-    dest: "~/.local/src/oh-my-zsh/custom/plugins/zsh-autosuggestions"
+    dest: "{{ lookup('env', 'HOME')}}/.local/src/oh-my-zsh/custom/plugins/zsh-autosuggestions"
   tags: *tags_for_zsh_tasks
 
 - name: Download Starship Prompt Theme
@@ -44,10 +44,10 @@
     - *tags_for_zsh_tasks
     - starship
 
-- name: Install zsh-autosuggestions
+- name: Install zsh-syntax-highlighting
   ansible.builtin.git:
     repo: "https://github.com/zsh-users/zsh-syntax-highlighting.git"
-    dest: "~/.local/src/oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+    dest: "{{ lookup('env', 'HOME')}}/.local/src/oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
   tags: *tags_for_zsh_tasks
 
 - name: Create State ZSH Directory

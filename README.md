@@ -8,7 +8,7 @@
 - [x] Make sure i3 reads zsh instead of bash ($TERMINAL variable)(change desktop entry)
 - [x] Install go
 - [x] Install wget (Is available on the system but not detected by LSPInstall)
-- [ ] LspInstall seems to not be working
+- [x] LspInstall seems to not be working <!-- Using Mason -->
 - [x] Install secrets for projects (.env, private keys for snowflake)
 - [x] Add gopass settings to oh-my-zsh (completion)
 - [x] Add gopass setup

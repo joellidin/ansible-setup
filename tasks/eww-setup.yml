@@ -8,14 +8,14 @@
 
 - name: Clone eww
   ansible.builtin.git:
-    repo: 'https://github.com/elkowar/eww.git'
+    repo: "https://github.com/elkowar/eww.git"
     dest: "{{ lookup('env', 'HOME') }}/.local/src/eww"
   tags:
     - install
     - eww
 
 - name: Install eww
-  shell: . ~/.config/cargo/env && cargo build --release
+  shell: ". $CARGO_HOME/env && cargo build --release --no-default-features --features x11"
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/eww"
   tags:
