@@ -1,0 +1,29 @@
+- name: Download the Hashicorp public signing key
+  shell: |
+    wget -O- https://apt.releases.hashicorp.com/gpg | \
+    sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  become: true
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Add the hashicorp apt repository
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
+    sudo tee /etc/apt/sources.list.d/hashicorp.list
+  become: true
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Update apt and install vault
+  become: true
+  apt:
+    update_cache: yes
+    name: vault
+  tags:
+    - install
+    - productivity
+    - vault

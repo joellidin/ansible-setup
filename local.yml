@@ -24,6 +24,7 @@
     - import_tasks: tasks/core-setup.yml
     - import_tasks: tasks/docker-setup.yml
     - import_tasks: tasks/kubectl-setup.yml
+    - import_tasks: tasks/vault-setup.yml
     - import_tasks: tasks/zsh-setup.yml
     - import_tasks: tasks/rust-setup.yml
     - import_tasks: tasks/python-setup.yml
