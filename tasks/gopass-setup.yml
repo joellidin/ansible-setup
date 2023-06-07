@@ -1,6 +1,6 @@
 - name: Download gopass deb package
   get_url:
-    url: https://github.com/gopasspw/gopass/releases/download/v1.14.0/gopass_1.14.0_linux_amd64.deb
+    url: https://github.com/gopasspw/gopass/releases/download/v1.15.5/gopass_1.15.5_linux_amd64.deb
     dest: /tmp
   tags:
     - install
@@ -9,7 +9,7 @@
 - name: Install gopass
   become: true
   apt:
-    deb: /tmp/gopass_1.14.0_linux_amd64.deb
+    deb: /tmp/gopass_1.15.5_linux_amd64.deb
   tags:
     - install
     - gopass
