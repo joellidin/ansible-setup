@@ -29,6 +29,12 @@
     dest: "{{ lookup('env', 'HOME')}}/.local/src/oh-my-zsh/custom/plugins/zsh-autosuggestions"
   tags: *tags_for_zsh_tasks
 
+- name: Install zsh-fzf-history-search
+  ansible.builtin.git:
+    repo: "https://github.com/joshskidmore/zsh-fzf-history-search.git"
+    dest: "{{ lookup('env', 'HOME')}}/.local/src/oh-my-zsh/custom/plugins/zsh-fzf-history-search"
+  tags: *tags_for_zsh_tasks
+
 - name: Download Starship Prompt Theme
   ansible.builtin.get_url:
     url: https://starship.rs/install.sh
