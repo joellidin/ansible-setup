@@ -1,7 +1,15 @@
+- name: Set kubectl version
+  set_fact: 
+    kubectl_version: v1.29
+  tags:
+    - install
+    - productivity
+    - kubectl
+
 - name: Download the Google Cloud public signing key
   shell: |
-    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
-    gpg --dearmor | sudo dd status=none of=/usr/share/keyrings/kubernetes-archive-keyring.gpg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubectl_version }}/deb/Release.key | \
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
   become: true
   tags:
     - install
@@ -10,8 +18,8 @@
 
 - name: Add the Kubernetes apt repository
   shell: |
-    echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | \
-    sudo tee /etc/apt/sources.list.d/kubernetes.list
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_version }}/deb/ /' | \
+    tee /etc/apt/sources.list.d/kubernetes.list
   become: true
   tags:
     - install
