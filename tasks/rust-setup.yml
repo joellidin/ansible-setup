@@ -26,7 +26,7 @@
 
 - name: Install nightly
   when: cargo_exists is failed
-  shell: . {{ lookup('env', 'HOME') }}/.config/cargo/env && rustup default nightly
+  shell: ". $CARGO_HOME/env && rustup default nightly"
   tags:
     - install
     - rust

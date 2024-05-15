@@ -35,7 +35,7 @@
     - neovim
 
 - name: Install StyLua
-  shell: . {{ lookup('env', 'HOME') }}/.config/cargo/env && cargo install stylua
+  shell: ". $CARGO_HOME/env && cargo install stylua"
   tags:
     - install
     - neovim

@@ -14,7 +14,7 @@
       - install
       - core
   environment:
-    CARGO_HOME: "{{ lookup('env', 'HOME') }}/.config/cargo"
+    CARGO_HOME: "{{ lookup('env', 'HOME') }}/.local/share/cargo"
     RUSTUP_HOME: "{{ lookup('env', 'HOME') }}/.local/share/rustup"
     N_PREFIX: "{{ lookup('env', 'HOME') }}/.local/share/n"
     PYENV_ROOT: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
