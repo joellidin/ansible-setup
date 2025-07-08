@@ -8,7 +8,6 @@
     - neovim
 
 - name: Clone Neovim
-  become: true
   ansible.builtin.git:
     repo: 'https://github.com/neovim/neovim.git'
     dest: "{{ lookup('env', 'HOME') }}/.local/src/neovim"

@@ -1,69 +1,14 @@
-- name: Set python version
-  set_fact: 
-    python_version: 3.12.2
-  tags:
-    - install
-    - python
-
-- name: Remove pyenv
-  ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
-    state: absent
-  tags:
-    - install
-    - python
-
-- name: Clone pyenv
-  ansible.builtin.git:
-    repo: "https://github.com/yyuu/pyenv.git"
-    dest: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
-  tags:
-    - install
-    - python
-
-- name: Install pyenv
-  shell: src/configure && make -C src
-  args:
-    chdir: "{{ lookup('env', 'HOME') }}/.local/src/pyenv"
-  tags:
-    - install
-    - python
-
-- name: Add cronjob for updating pyenv
-  ansible.builtin.cron:
-    name: "update pyenv"
-    minute: "0"
-    hour: "10"
-    weekday: "1"
-    job: "cd {{ lookup('env', 'HOME') }}/.local/src/pyenv && git pull --rebase"
-  tags:
-    - install
-    - python
-
-- name: Install python {{ python_version }}
-  shell: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/bin/pyenv install {{ python_version }}"
-  tags:
-    - install
-    - python
-
-- name: Set python {{ python_version }} globally
-  shell: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/bin/pyenv global {{ python_version }}"
-  tags:
-    - install
-    - python
-
-- name: Install Virtualenv
-  shell: pip install virtualenv virtualenvwrapper
+- name: Install uv
+  shell: curl -LsSf https://astral.sh/uv/install.sh | sh
   become: true
   tags:
     - install
     - python
+    - uv
 
-- name: Install Pipenv
-  pip:
-    name: pipenv
-    extra_args: --upgrade
-    executable: "{{ lookup('env', 'HOME') }}/.local/src/pyenv/shims/pip"
+- name: Install python
+  shell: . $CARGO_HOME/env && uv python install
   tags:
     - install
     - python
+

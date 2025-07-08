@@ -41,7 +41,7 @@
 - name: Install Productivity Packages
   become: true
   package:
-    name: ["curl", "xcape", "xdotool", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "git", "fd-find", "mlocate"]
+    name: ["curl", "xcape", "xdotool", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "git", "fd-find", "plocate"]
   tags:
     - install
     - productivity
