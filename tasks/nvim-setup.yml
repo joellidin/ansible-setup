@@ -1,47 +1,64 @@
-- name: Remove Neovim
-  become: true
-  ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
-    state: absent
+- name: Check if Neovim is installed
+  command: nvim --version
+  register: nvim_installed
+  changed_when: false
+  failed_when: false
   tags:
     - install
     - neovim
 
-- name: Clone Neovim
+- name: Clone or update Neovim repository
   ansible.builtin.git:
-    repo: 'https://github.com/neovim/neovim.git'
-    dest: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+    repo: "{{ neovim_repo | default('https://github.com/neovim/neovim.git') }}"
+    dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+    version: stable
+    update: yes
+    force: no
+  register: nvim_clone
   tags:
     - install
     - neovim
 
 - name: Build Neovim
-  become: true
-  shell: make CMAKE_BUILD_TYPE=RelWithDebInfo
-  args:
-    chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+  community.general.make:
+    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+    params:
+      CMAKE_BUILD_TYPE: RelWithDebInfo
+  when: nvim_clone.changed or nvim_installed.rc != 0
+  register: nvim_build
   tags:
     - install
     - neovim
 
 - name: Install Neovim
   become: true
-  shell: make install
-  args:
-    chdir: "{{ lookup('env', 'HOME') }}/.local/src/neovim"
+  community.general.make:
+    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+    target: install
+  when: nvim_build.changed | default(false)
+  tags:
+    - install
+    - neovim
+
+- name: Check if StyLua is installed
+  shell: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/bin/stylua --version"
+  register: stylua_installed
+  changed_when: false
+  failed_when: false
   tags:
     - install
     - neovim
 
 - name: Install StyLua
-  shell: ". $CARGO_HOME/env && cargo install stylua"
+  shell: ". {{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/env && cargo install stylua"
+  when: stylua_installed.rc != 0
   tags:
     - install
     - neovim
 
 - name: Create Databases Directory for Neovim
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME')}}/.local/share/nvim/databases"
+    path: "{{ nvim_data_path | default(ansible_env.HOME + '/.local/share/nvim') }}/databases"
     state: directory
   tags:
     - install
@@ -50,8 +67,10 @@
 
 - name: Create Telescope Database File
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME')}}/.local/share/nvim/databases/telescope_history.sqlite3"
+    path: "{{ nvim_data_path | default(ansible_env.HOME + '/.local/share/nvim') }}/databases/telescope_history.sqlite3"
     state: touch
+    modification_time: preserve
+    access_time: preserve
   tags:
     - install
     - dotfiles
