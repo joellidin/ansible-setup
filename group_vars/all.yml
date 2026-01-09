@@ -1,0 +1,80 @@
+---
+# =============================================================================
+# Centralized Configuration for Ansible Bootstrap Playbook
+# =============================================================================
+# All versions and paths are defined here for easy maintenance.
+# Update versions in this single file rather than across multiple task files.
+
+# -----------------------------------------------------------------------------
+# Tool Versions
+# -----------------------------------------------------------------------------
+# Keeping versions centralized makes upgrades straightforward and auditable.
+
+go_version: "1.23.4"
+kubectl_version: "v1.31"
+gopass_version: "1.16.1"
+node_version: "20"
+
+# -----------------------------------------------------------------------------
+# XDG Base Directory Paths
+# -----------------------------------------------------------------------------
+# Following XDG Base Directory Specification for clean home directory.
+# Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+local_bin: "{{ ansible_env.HOME }}/.local/bin"
+local_src: "{{ ansible_env.HOME }}/.local/src"
+local_share: "{{ ansible_env.HOME }}/.local/share"
+local_state: "{{ ansible_env.HOME }}/.local/state"
+config_home: "{{ ansible_env.HOME }}/.config"
+cache_home: "{{ ansible_env.HOME }}/.cache"
+
+# -----------------------------------------------------------------------------
+# Language-Specific Paths
+# -----------------------------------------------------------------------------
+
+# Rust
+cargo_home: "{{ local_share }}/cargo"
+rustup_home: "{{ local_share }}/rustup"
+
+# Node.js
+n_prefix: "{{ local_share }}/n"
+npm_config_userconfig: "{{ config_home }}/npm/npmrc"
+npm_cache: "{{ cache_home }}/npm"
+
+# Go (system-wide installation)
+go_install_path: "/usr/local/go"
+
+# -----------------------------------------------------------------------------
+# Application Paths
+# -----------------------------------------------------------------------------
+
+oh_my_zsh_path: "{{ local_src }}/oh-my-zsh"
+dotfiles_path: "{{ ansible_env.HOME }}/.dotfiles"
+nvim_data_path: "{{ local_share }}/nvim"
+gopass_store_path: "{{ local_share }}/gopass/stores/root"
+
+# -----------------------------------------------------------------------------
+# Git Repositories
+# -----------------------------------------------------------------------------
+
+dotfiles_repo: "https://github.com/joellidin/dotfiles.git"
+neovim_repo: "https://github.com/neovim/neovim.git"
+tmux_repo: "https://github.com/tmux/tmux.git"
+i3blocks_repo: "https://github.com/vivien/i3blocks"
+gopass_store_repo: "https://github.com/joellidin/private-pass.git"
+
+# -----------------------------------------------------------------------------
+# Download URLs
+# -----------------------------------------------------------------------------
+
+go_download_url: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+gopass_download_url: "https://github.com/gopasspw/gopass/releases/download/v{{ gopass_version }}/gopass-{{ gopass_version }}-linux-amd64.tar.gz"
+
+# -----------------------------------------------------------------------------
+# Checksums (SHA256)
+# -----------------------------------------------------------------------------
+# Verify downloads to prevent tampering. Update these when changing versions.
+# Get checksums from official release pages.
+
+# Go 1.23.4: https://go.dev/dl/
+go_checksum: "sha256:6924efde5de86fe277676e929dc9917d466efa02fb934197bc2eba35d5680971"
