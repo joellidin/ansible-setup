@@ -1,14 +1,12 @@
 - name: Install uv
   shell: curl -LsSf https://astral.sh/uv/install.sh | sh
-  become: true
   tags:
     - install
     - python
     - uv
 
 - name: Install python
-  shell: . $CARGO_HOME/env && uv python install
+  shell: "{{ lookup('env', 'HOME') }}/.local/bin/uv python install"
   tags:
     - install
     - python
-

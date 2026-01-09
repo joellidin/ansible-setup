@@ -16,7 +16,7 @@ ARG TAGS
 RUN addgroup --gid 1001 jlidin
 RUN adduser --gecos jlidin --uid 1001 --gid 1001 --disabled-password jlidin
 RUN usermod -aG sudo jlidin
-RUN passwd -d jlidin
+RUN echo 'jlidin ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 USER jlidin
 WORKDIR /home/jlidin
 
