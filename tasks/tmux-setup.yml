@@ -1,37 +1,42 @@
-- name: Remove tmux
-  ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
-    state: absent
+- name: Check if tmux is installed
+  command: tmux -V
+  register: tmux_installed
+  changed_when: false
+  failed_when: false
   tags:
     - install
     - productivity
     - tmux
 
-- name: Clone Tmux
-  become: true
+- name: Clone or update tmux repository
   ansible.builtin.git:
-    repo: "https://github.com/tmux/tmux.git"
-    dest: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+    repo: "{{ tmux_repo | default('https://github.com/tmux/tmux.git') }}"
+    dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/tmux"
+    update: yes
+    force: no
+  register: tmux_clone
   tags:
     - install
     - productivity
     - tmux
 
-- name: Configure Tmux
-  become: true
+- name: Configure and build tmux
   shell: sh autogen.sh && ./configure && make
   args:
-    chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/tmux"
+  when: tmux_clone.changed or tmux_installed.rc != 0
+  register: tmux_build
   tags:
     - install
     - productivity
     - tmux
 
-- name: Install Tmux
+- name: Install tmux
   become: true
-  make:
-    chdir: "{{ lookup('env', 'HOME') }}/.local/src/tmux"
+  community.general.make:
+    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/tmux"
     target: install
+  when: tmux_build.changed | default(false)
   tags:
     - install
     - productivity
