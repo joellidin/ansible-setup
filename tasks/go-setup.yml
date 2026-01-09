@@ -1,50 +1,64 @@
-- name: Set golang version
-  set_fact:
-    new_go_version: "1.19.5"
-  tags:
-    - install
-    - go
-
-- name: Check current golang version
-  command: bash -c "/usr/local/go/bin/go version|sed -e 's/go version go//g'|cut -d' ' -f1"
-  ignore_errors: true
-  register: go_version
+- name: Check current Go version
+  command: "{{ go_install_path | default('/usr/local/go') }}/bin/go version"
+  register: go_version_check
   changed_when: false
+  failed_when: false
   tags:
     - install
     - go
 
-- name: Continue only when version is older
-  fail: msg="Version already exists"
-  when: go_version.stdout != "" and "go_version.stdout is version_compare('new_go_version', operator='ge', strict=True)"
+- name: Extract installed Go version
+  set_fact:
+    go_installed_version: "{{ go_version_check.stdout | regex_search('go([0-9.]+)', '\\1') | first | default('0') }}"
+  when: go_version_check.rc == 0
   tags:
     - install
     - go
 
-- name: Download golang tar 
+- name: Set Go needs install
+  set_fact:
+    go_needs_install: "{{ go_version_check.rc != 0 or (go_installed_version | default('0')) is version(go_version | default('1.23.4'), '<') }}"
+  tags:
+    - install
+    - go
+
+- name: Download Go tarball
   get_url:
-    url: "https://go.dev/dl/go{{new_go_version}}.linux-amd64.tar.gz"
-    dest: /tmp
-    mode: 0440
+    url: "{{ go_download_url | default('https://go.dev/dl/go' + (go_version | default('1.23.4')) + '.linux-amd64.tar.gz') }}"
+    dest: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
+    checksum: "{{ go_checksum | default(omit) }}"
+    mode: '0440'
+  when: go_needs_install
   tags:
     - install
     - go
-   
-- name: Remove old installation of Go
+
+- name: Remove old Go installation
   file:
-    path: /usr/local/go
+    path: "{{ go_install_path | default('/usr/local/go') }}"
     state: absent
   become: true
+  when: go_needs_install
   tags:
     - install
     - go
 
-- name: Extract the Go tarball
+- name: Extract Go tarball
   unarchive:
-    src: "/tmp/go{{new_go_version}}.linux-amd64.tar.gz"
+    src: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
     dest: /usr/local
-    copy: no
+    remote_src: yes
   become: true
+  when: go_needs_install
+  tags:
+    - install
+    - go
+
+- name: Clean up Go tarball
+  file:
+    path: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
+    state: absent
+  when: go_needs_install
   tags:
     - install
     - go
