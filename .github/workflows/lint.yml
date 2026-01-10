@@ -1,0 +1,38 @@
+---
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run yamllint
+        run: |
+          uvx yamllint -c .yamllint.yml .
+        continue-on-error: true
+
+      - name: Run ansible-lint
+        run: |
+          uvx ansible-lint --profile production
+        continue-on-error: true
+
+      - name: Check syntax
+        run: |
+          uvx --with ansible ansible-playbook local.yml --syntax-check

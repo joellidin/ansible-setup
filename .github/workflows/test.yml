@@ -1,0 +1,79 @@
+---
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  molecule:
+    name: Molecule Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - default
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run Molecule tests
+        run: |
+          uvx --with ansible --with molecule-plugins[docker] --with docker molecule test --scenario-name ${{ matrix.scenario }}
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_DISTRO: ubuntu:noble
+
+  syntax-check:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run syntax check
+        run: |
+          uvx --with ansible ansible-playbook local.yml --syntax-check
+
+  idempotence-check:
+    name: Idempotence Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run idempotence test
+        run: |
+          uvx --with ansible --with molecule-plugins[docker] --with docker molecule test --scenario-name default --destroy never
+          uvx --with ansible --with molecule-plugins[docker] --with docker molecule idempotence --scenario-name default
+          uvx --with ansible --with molecule-plugins[docker] --with docker molecule destroy --scenario-name default
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
