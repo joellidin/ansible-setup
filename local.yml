@@ -4,6 +4,7 @@
     src_gh_hosts: "./hosts.yml"
     src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
+  - import_tasks: tasks/preflight.yml
   - name: Update Apt
     become: true
     apt:
