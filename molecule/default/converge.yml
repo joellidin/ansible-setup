@@ -1,0 +1,89 @@
+---
+- name: Converge
+  hosts: all
+  become: false
+  gather_facts: true
+
+  vars:
+    # Override paths for test environment
+    local_bin: "{{ ansible_env.HOME }}/.local/bin"
+    local_src: "{{ ansible_env.HOME }}/.local/src"
+    local_share: "{{ ansible_env.HOME }}/.local/share"
+    local_state: "{{ ansible_env.HOME }}/.local/state"
+    config_home: "{{ ansible_env.HOME }}/.config"
+    cache_home: "{{ ansible_env.HOME }}/.cache"
+
+    # Skip certain tasks in CI that require external resources
+    skip_encrypted_files: true
+
+  environment:
+    CARGO_HOME: "{{ ansible_env.HOME }}/.local/share/cargo"
+    RUSTUP_HOME: "{{ ansible_env.HOME }}/.local/share/rustup"
+    N_PREFIX: "{{ ansible_env.HOME }}/.local/share/n"
+    NPM_CONFIG_USERCONFIG: "{{ ansible_env.HOME }}/.config/npm/npmrc"
+
+  pre_tasks:
+    - name: Create required directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ local_bin }}"
+        - "{{ local_src }}"
+        - "{{ local_share }}"
+        - "{{ local_state }}"
+        - "{{ config_home }}"
+        - "{{ cache_home }}"
+
+    - name: Update apt cache
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  tasks:
+    # Test core setup and productivity tools
+    - name: Include productivity tools
+      ansible.builtin.import_tasks: ../../tasks/productivity-tools.yml
+      tags:
+        - productivity
+
+    - name: Include core setup
+      ansible.builtin.import_tasks: ../../tasks/core-setup.yml
+      tags:
+        - core
+
+    # Test docker role
+    - name: Include docker role
+      ansible.builtin.include_role:
+        name: docker
+      tags:
+        - docker
+
+    # Test individual tool setups
+    - name: Include zsh setup
+      ansible.builtin.import_tasks: ../../tasks/zsh-setup.yml
+      tags:
+        - zsh
+
+    - name: Include kubectl setup
+      ansible.builtin.import_tasks: ../../tasks/kubectl-setup.yml
+      tags:
+        - kubectl
+
+    - name: Include vault setup
+      ansible.builtin.import_tasks: ../../tasks/vault-setup.yml
+      tags:
+        - vault
+
+    - name: Include brave setup
+      ansible.builtin.import_tasks: ../../tasks/brave-setup.yml
+      tags:
+        - brave
+
+    - name: Include gh setup (without encrypted files)
+      ansible.builtin.import_tasks: ../../tasks/gh-setup.yml
+      when: not skip_encrypted_files
+      tags:
+        - gh

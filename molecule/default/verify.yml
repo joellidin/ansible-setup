@@ -1,0 +1,152 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    # Verify ZSH installation
+    - name: Check zsh is installed
+      ansible.builtin.command: which zsh
+      register: zsh_check
+      changed_when: false
+
+    - name: Verify zsh installation
+      ansible.builtin.assert:
+        that:
+          - zsh_check.rc == 0
+        fail_msg: "ZSH is not installed"
+        success_msg: "ZSH is installed at {{ zsh_check.stdout }}"
+
+    - name: Check user shell is zsh
+      ansible.builtin.command: getent passwd {{ ansible_user_id }}
+      register: user_shell
+      changed_when: false
+
+    - name: Verify user shell
+      ansible.builtin.assert:
+        that:
+          - "'/bin/zsh' in user_shell.stdout or '/usr/bin/zsh' in user_shell.stdout"
+        fail_msg: "User shell is not ZSH"
+        success_msg: "User shell is correctly set to ZSH"
+
+    # Verify oh-my-zsh
+    - name: Check oh-my-zsh directory exists
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.local/src/oh-my-zsh"
+      register: omz_dir
+
+    - name: Verify oh-my-zsh installation
+      ansible.builtin.assert:
+        that:
+          - omz_dir.stat.exists
+          - omz_dir.stat.isdir
+        fail_msg: "Oh-My-Zsh is not installed"
+        success_msg: "Oh-My-Zsh is installed"
+
+    # Verify Docker
+    - name: Check docker is installed
+      ansible.builtin.command: which docker
+      register: docker_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify docker installation
+      ansible.builtin.assert:
+        that:
+          - docker_check.rc == 0
+        fail_msg: "Docker is not installed"
+        success_msg: "Docker is installed at {{ docker_check.stdout }}"
+
+    - name: Check user is in docker group
+      ansible.builtin.command: groups {{ ansible_user_id }}
+      register: user_groups
+      changed_when: false
+
+    - name: Verify docker group membership
+      ansible.builtin.assert:
+        that:
+          - "'docker' in user_groups.stdout"
+        fail_msg: "User is not in docker group"
+        success_msg: "User is in docker group"
+
+    # Verify kubectl
+    - name: Check kubectl is installed
+      ansible.builtin.command: which kubectl
+      register: kubectl_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify kubectl installation
+      ansible.builtin.assert:
+        that:
+          - kubectl_check.rc == 0
+        fail_msg: "kubectl is not installed"
+        success_msg: "kubectl is installed at {{ kubectl_check.stdout }}"
+
+    # Verify Vault
+    - name: Check vault is installed
+      ansible.builtin.command: which vault
+      register: vault_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify vault installation
+      ansible.builtin.assert:
+        that:
+          - vault_check.rc == 0
+        fail_msg: "Vault is not installed"
+        success_msg: "Vault is installed at {{ vault_check.stdout }}"
+
+    # Verify Brave
+    - name: Check brave-browser is installed
+      ansible.builtin.command: which brave-browser
+      register: brave_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify brave installation
+      ansible.builtin.assert:
+        that:
+          - brave_check.rc == 0
+        fail_msg: "Brave browser is not installed"
+        success_msg: "Brave browser is installed at {{ brave_check.stdout }}"
+
+    # Verify GitHub CLI
+    - name: Check gh is installed
+      ansible.builtin.command: which gh
+      register: gh_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify gh installation
+      ansible.builtin.assert:
+        that:
+          - gh_check.rc == 0
+        fail_msg: "GitHub CLI is not installed"
+        success_msg: "GitHub CLI is installed at {{ gh_check.stdout }}"
+
+    # Verify APT repositories are configured
+    - name: Check Docker repository exists
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list.d/docker.list
+      register: docker_repo
+
+    - name: Verify Docker repository
+      ansible.builtin.assert:
+        that:
+          - docker_repo.stat.exists
+        fail_msg: "Docker APT repository not configured"
+        success_msg: "Docker APT repository is configured"
+
+    # Summary
+    - name: Display verification summary
+      ansible.builtin.debug:
+        msg: |
+          Verification complete!
+          - ZSH: {{ 'OK' if zsh_check.rc == 0 else 'FAILED' }}
+          - Oh-My-Zsh: {{ 'OK' if omz_dir.stat.exists else 'FAILED' }}
+          - Docker: {{ 'OK' if docker_check.rc == 0 else 'FAILED' }}
+          - kubectl: {{ 'OK' if kubectl_check.rc == 0 else 'FAILED' }}
+          - Vault: {{ 'OK' if vault_check.rc == 0 else 'FAILED' }}
+          - Brave: {{ 'OK' if brave_check.rc == 0 else 'FAILED' }}
+          - GitHub CLI: {{ 'OK' if gh_check.rc == 0 else 'FAILED' }}
