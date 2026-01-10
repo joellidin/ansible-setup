@@ -14,14 +14,18 @@
       - install
       - core
   environment:
-    CARGO_HOME: "{{ lookup('env', 'HOME') }}/.local/share/cargo"
-    RUSTUP_HOME: "{{ lookup('env', 'HOME') }}/.local/share/rustup"
-    N_PREFIX: "{{ lookup('env', 'HOME') }}/.local/share/n"
-    NPM_CONFIG_USERCONFIG: "{{ lookup('env', 'HOME') }}/.config/npm/npmrc"
+    CARGO_HOME: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}"
+    RUSTUP_HOME: "{{ rustup_home | default(ansible_env.HOME + '/.local/share/rustup') }}"
+    N_PREFIX: "{{ n_prefix | default(ansible_env.HOME + '/.local/share/n') }}"
+    NPM_CONFIG_USERCONFIG: "{{ npm_config_userconfig | default(ansible_env.HOME + '/.config/npm/npmrc') }}"
+  roles:
+    - role: docker
+      tags:
+        - install
+        - docker
   tasks:
     - import_tasks: tasks/productivity-tools.yml
     - import_tasks: tasks/core-setup.yml
-    - import_tasks: tasks/docker-setup.yml
     - import_tasks: tasks/kubectl-setup.yml
     - import_tasks: tasks/vault-setup.yml
     - import_tasks: tasks/zsh-setup.yml
