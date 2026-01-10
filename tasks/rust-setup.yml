@@ -1,3 +1,4 @@
+---
 - name: check if cargo is installed
   shell: which cargo
   register: cargo_exists

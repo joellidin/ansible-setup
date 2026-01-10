@@ -1,3 +1,4 @@
+---
 - name: Check if Neovim is installed
   ansible.builtin.command: nvim --version
   register: nvim_installed
@@ -61,7 +62,9 @@
     - neovim
 
 - name: Install StyLua
-  ansible.builtin.shell: ". {{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/env && cargo install stylua"
+  vars:
+    cargo: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}"
+  ansible.builtin.shell: ". {{ cargo }}/env && cargo install stylua"
   when: stylua_installed.rc != 0
   tags:
     - install

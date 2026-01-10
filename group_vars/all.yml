@@ -68,7 +68,9 @@ gopass_store_repo: "https://github.com/joellidin/private-pass.git"
 # -----------------------------------------------------------------------------
 
 go_download_url: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
-gopass_download_url: "https://github.com/gopasspw/gopass/releases/download/v{{ gopass_version }}/gopass-{{ gopass_version }}-linux-amd64.tar.gz"
+gopass_download_url: >-
+  https://github.com/gopasspw/gopass/releases/download/v{{ gopass_version
+  }}/gopass-{{ gopass_version }}-linux-amd64.tar.gz
 
 # -----------------------------------------------------------------------------
 # Checksums (SHA256)

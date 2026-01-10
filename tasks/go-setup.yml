@@ -1,3 +1,4 @@
+---
 - name: Check current Go version
   command: "{{ go_install_path | default('/usr/local/go') }}/bin/go version"
   register: go_version_check
@@ -17,15 +18,20 @@
 
 - name: Set Go needs install
   set_fact:
-    go_needs_install: "{{ go_version_check.rc != 0 or (go_installed_version | default('0')) is version(go_version | default('1.23.4'), '<') }}"
+    go_needs_install: >-
+      {{ go_version_check.rc != 0 or
+         (go_installed_version | default('0')) is version(go_version | default('1.23.4'), '<') }}
   tags:
     - install
     - go
 
 - name: Download Go tarball
+  vars:
+    go_ver: "{{ go_version | default('1.23.4') }}"
+    default_url: "https://go.dev/dl/go{{ go_ver }}.linux-amd64.tar.gz"
   get_url:
-    url: "{{ go_download_url | default('https://go.dev/dl/go' + (go_version | default('1.23.4')) + '.linux-amd64.tar.gz') }}"
-    dest: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
+    url: "{{ go_download_url | default(default_url) }}"
+    dest: "/tmp/go{{ go_ver }}.linux-amd64.tar.gz"
     checksum: "{{ go_checksum | default(omit) }}"
     mode: '0440'
   when: go_needs_install

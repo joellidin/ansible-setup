@@ -1,3 +1,4 @@
+---
 - name: Install wget
   become: true
   package:
@@ -32,7 +33,7 @@
 
 - name: Update apt-get repo and cache
   become: true
-  apt: 
+  apt:
     update_cache: yes
   tags:
     - install
@@ -41,7 +42,29 @@
 - name: Install Productivity Packages
   become: true
   package:
-    name: ["curl", "xcape", "xdotool", "ffmpeg", "maim", "imagemagick", "jq", "xclip", "xwallpaper", "fzf", "rofi", "acpi", "unclutter", "xcompmgr", "sqlite3", "libsqlite3-dev", "ripgrep", "i3-gaps", "python3-pip", "git", "fd-find", "plocate"]
+    name:
+      - curl
+      - xcape
+      - xdotool
+      - ffmpeg
+      - maim
+      - imagemagick
+      - jq
+      - xclip
+      - xwallpaper
+      - fzf
+      - rofi
+      - acpi
+      - unclutter
+      - xcompmgr
+      - sqlite3
+      - libsqlite3-dev
+      - ripgrep
+      - i3-gaps
+      - python3-pip
+      - git
+      - fd-find
+      - plocate
   tags:
     - install
     - productivity
@@ -49,13 +72,22 @@
 - name: Install Packages for Yubico
   become: true
   package:
-    name: ["scdaemon", "yubikey-manager", "libpam-yubico", "libpam-u2f", "libu2f-udev"]
+    name:
+      - scdaemon
+      - yubikey-manager
+      - libpam-yubico
+      - libpam-u2f
+      - libu2f-udev
   tags:
     - install
     - productivity
 
 - name: Install Git Delta
-  shell: curl -L -s https://api.github.com/repos/dandavison/delta/releases/latest | grep -o -E "https://(.*)git-delta_(.*)_amd64.deb" | xargs -n 1 curl -fsSL -O && ls | grep -o -E "git-delta_(.*)amd64.deb" | xargs -n 1 dpkg -i 
+  shell: |
+    curl -L -s https://api.github.com/repos/dandavison/delta/releases/latest |
+    grep -o -E "https://(.*)git-delta_(.*)_amd64.deb" |
+    xargs -n 1 curl -fsSL -O &&
+    ls | grep -o -E "git-delta_(.*)amd64.deb" | xargs -n 1 dpkg -i
   args:
     chdir: /tmp
   become: true

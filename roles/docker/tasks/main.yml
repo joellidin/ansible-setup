@@ -45,8 +45,11 @@
   changed_when: false
 
 - name: Add Docker repository
+  vars:
+    arch: "{{ dpkg_arch.stdout }}"
+    codename: "{{ ubuntu_codename.stdout }}"
   ansible.builtin.apt_repository:
-    repo: "deb [arch={{ dpkg_arch.stdout }} signed-by={{ docker_gpg_keyring }}] {{ docker_repo_url }} {{ ubuntu_codename.stdout }} stable"
+    repo: "deb [arch={{ arch }} signed-by={{ docker_gpg_keyring }}] {{ docker_repo_url }} {{ codename }} stable"
     filename: docker
     state: present
   become: true

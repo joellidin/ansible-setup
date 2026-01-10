@@ -1,3 +1,4 @@
+---
 - name: Create fonts folder if it does not exist
   ansible.builtin.file:
     path: "{{ lookup('env', 'HOME')}}/.local/share/fonts"

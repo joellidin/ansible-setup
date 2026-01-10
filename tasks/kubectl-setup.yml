@@ -1,3 +1,4 @@
+---
 - name: Ensure /etc/apt/keyrings exists
   ansible.builtin.file:
     path: /etc/apt/keyrings
@@ -53,8 +54,11 @@
     - kubectl
 
 - name: Add Kubernetes apt repository
+  vars:
+    keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    k8s_ver: "{{ kubectl_version | default('v1.31') }}"
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_version | default('v1.31') }}/deb/ /"
+    repo: "deb [signed-by={{ keyring }}] https://pkgs.k8s.io/core:/stable:/{{ k8s_ver }}/deb/ /"
     filename: kubernetes
     state: present
   become: true

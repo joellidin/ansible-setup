@@ -1,19 +1,20 @@
+---
 - hosts: localhost
   connection: local
   vars:
     src_gh_hosts: "./hosts.yml"
     src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
-  - import_tasks: tasks/preflight.yml
-  - name: Update Apt
-    become: true
-    apt:
-      force_apt_get: true
-      update_cache: true
-      state: present
-    tags:
-      - install
-      - core
+    - import_tasks: tasks/preflight.yml
+    - name: Update Apt
+      become: true
+      apt:
+        force_apt_get: true
+        update_cache: true
+        state: present
+      tags:
+        - install
+        - core
   environment:
     CARGO_HOME: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}"
     RUSTUP_HOME: "{{ rustup_home | default(ansible_env.HOME + '/.local/share/rustup') }}"
@@ -46,13 +47,13 @@
     # - import_tasks: tasks/slack-setup.yml
     # - import_tasks: tasks/projects-setup.yml
   post_tasks:
-  - name: Upgrade Apt
-    become: true
-    apt:
-      force_apt_get: true
-      update_cache: true
-      upgrade: yes
-      state: present
-    tags:
-      - install
-      - core
+    - name: Upgrade Apt
+      become: true
+      apt:
+        force_apt_get: true
+        update_cache: true
+        upgrade: yes
+        state: present
+      tags:
+        - install
+        - core

@@ -1,3 +1,4 @@
+---
 - name: Check if Brave GPG key exists
   ansible.builtin.stat:
     path: /usr/share/keyrings/brave-browser-archive-keyring.gpg
@@ -18,8 +19,10 @@
     - brave
 
 - name: Add Brave apt repository
+  vars:
+    keyring: /usr/share/keyrings/brave-browser-archive-keyring.gpg
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+    repo: "deb [signed-by={{ keyring }} arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
     filename: brave-browser-release
     state: present
   become: true

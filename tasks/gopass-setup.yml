@@ -1,3 +1,4 @@
+---
 - name: Download and extract gopass binary
   ansible.builtin.unarchive:
     src: https://github.com/gopasspw/gopass/releases/download/v1.16.1/gopass-1.16.1-linux-amd64.tar.gz

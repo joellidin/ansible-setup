@@ -1,3 +1,4 @@
+---
 - name: Check if i3blocks is installed
   command: i3blocks -V
   register: i3blocks_installed

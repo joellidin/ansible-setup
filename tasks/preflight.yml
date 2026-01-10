@@ -11,20 +11,24 @@
     - preflight
 
 - name: Check available disk space on root
+  vars:
+    gb_available: "{{ (item.size_available / 1073741824) | round(2) }}"
   ansible.builtin.assert:
     that: item.size_available > 5368709120
-    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ (item.size_available / 1073741824) | round(2) }}GB)"
-    success_msg: "Disk space OK: {{ (item.size_available / 1073741824) | round(2) }}GB available on {{ item.mount }}"
+    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ gb_available }}GB)"
+    success_msg: "Disk space OK: {{ gb_available }}GB available on {{ item.mount }}"
   loop: "{{ ansible_mounts | selectattr('mount', 'equalto', '/') | list }}"
   tags:
     - always
     - preflight
 
 - name: Check available disk space on home
+  vars:
+    gb_available: "{{ (item.size_available / 1073741824) | round(2) }}"
   ansible.builtin.assert:
     that: item.size_available > 5368709120
-    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ (item.size_available / 1073741824) | round(2) }}GB)"
-    success_msg: "Disk space OK: {{ (item.size_available / 1073741824) | round(2) }}GB available on {{ item.mount }}"
+    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ gb_available }}GB)"
+    success_msg: "Disk space OK: {{ gb_available }}GB available on {{ item.mount }}"
   loop: "{{ ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list }}"
   when: ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list | length > 0
   tags:

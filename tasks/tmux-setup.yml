@@ -1,3 +1,4 @@
+---
 - name: Check if tmux is installed
   command: tmux -V
   register: tmux_installed

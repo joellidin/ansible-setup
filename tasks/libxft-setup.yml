@@ -1,3 +1,4 @@
+---
 - name: Clone libxft
   ansible.builtin.git:
     repo: "https://gitlab.freedesktop.org/xorg/lib/libxft.git"

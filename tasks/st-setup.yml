@@ -1,3 +1,4 @@
+---
 - name: Remove st
   ansible.builtin.file:
     path: "{{ lookup('env', 'HOME') }}/.local/src/st"

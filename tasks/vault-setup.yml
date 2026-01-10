@@ -1,3 +1,4 @@
+---
 - name: Check if Hashicorp GPG key exists
   ansible.builtin.stat:
     path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
@@ -51,8 +52,10 @@
     - vault
 
 - name: Add Hashicorp apt repository
+  vars:
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ubuntu_codename.stdout }} main"
+    repo: "deb [signed-by={{ keyring }}] https://apt.releases.hashicorp.com {{ ubuntu_codename.stdout }} main"
     filename: hashicorp
     state: present
   become: true

@@ -1,7 +1,8 @@
+---
 - name: Cloning .dotfiles
   ansible.builtin.git:
     repo: "https://github.com/joellidin/dotfiles.git"
-    dest: "{{ lookup('env', 'HOME') }}/.dotfiles"
+    dest: "{{ ansible_env.HOME }}/.dotfiles"
     bare: yes
     update: yes
     accept_hostkey: yes
@@ -12,21 +13,27 @@
 
 - name: Create Backup Directory for Configs
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/.config-backup"
+    path: "{{ ansible_env.HOME }}/.config-backup"
     state: directory
   tags:
     - install
     - dotfiles
 
 - name: Backup Existing Configs
-  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout 2>&1 | egrep '\s+\.' | awk {'print $1'} | xargs -I{} mv {{ lookup('env', 'HOME') }}/$(basename {}) {{ lookup('env', 'HOME') }}/.config-backup/
+  vars:
+    dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
+    home: "{{ ansible_env.HOME }}"
+  shell: |
+    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout 2>&1 |
+    egrep '\s+\.' | awk {'print $1'} |
+    xargs -I{} mv {{ home }}/$(basename {}) {{ home }}/.config-backup/
   tags:
     - install
     - dotfiles
 
 - name: Check if Backup Directory is Empty
   find:
-    paths: "{{ lookup('env', 'HOME') }}/.config-backup"
+    paths: "{{ ansible_env.HOME }}/.config-backup"
   register: filesFound
   tags:
     - install
@@ -34,7 +41,7 @@
 
 - name: Remove Backup Direcotry
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/.config-backup"
+    path: "{{ ansible_env.HOME }}/.config-backup"
     state: absent
   when: filesFound.matched == 0
   tags:
@@ -42,13 +49,21 @@
     - dotfiles
 
 - name: Install Dotfiles Configs
-  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} checkout
+  vars:
+    dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
+    home: "{{ ansible_env.HOME }}"
+  shell: /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout
   tags:
     - install
     - dotfiles
 
 - name: Hide Untracked Files
-  shell: /usr/bin/git --git-dir={{ lookup('env', 'HOME') }}/.dotfiles/ --work-tree={{ lookup('env', 'HOME') }} config --local status.showUntrackedFiles no
+  vars:
+    dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
+    home: "{{ ansible_env.HOME }}"
+  shell: |
+    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} \
+      config --local status.showUntrackedFiles no
   tags:
     - install
     - dotfiles
