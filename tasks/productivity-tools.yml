@@ -10,23 +10,34 @@
 - name: regolith-linux
   become: true
   block:
+    - name: Check if regolith keyring exists
+      ansible.builtin.stat:
+        path: /usr/share/keyrings/regolith-archive-keyring.gpg
+      register: regolith_keyring
+
     - name: Download regolith key
-      shell: |
+      ansible.builtin.shell: |
         wget -qO - https://regolith-desktop.org/regolith.key | \
         gpg --dearmor | sudo tee /usr/share/keyrings/regolith-archive-keyring.gpg > /dev/null
+      when: not regolith_keyring.stat.exists
 
-    - name: Add the repositry url to apt
-      shell: |
-        echo deb "[arch=amd64 signed-by=/usr/share/keyrings/regolith-archive-keyring.gpg] \
-        https://regolith-desktop.org/release-ubuntu-jammy-amd64 jammy main" | \
-        sudo tee /etc/apt/sources.list.d/regolith.list
+    - name: Add the repository url to apt
+      vars:
+        keyring: /usr/share/keyrings/regolith-archive-keyring.gpg
+        repo_url: https://regolith-desktop.org/release-ubuntu-jammy-amd64
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/regolith.list
+        content: "deb [arch=amd64 signed-by={{ keyring }}] {{ repo_url }} jammy main\n"
+        mode: '0644'
   tags:
     - install
     - productivity
 
 - name: git-core ppa (ppa:git-core/ppa)
   become: true
-  shell: add-apt-repository ppa:git-core/ppa -y
+  ansible.builtin.apt_repository:
+    repo: ppa:git-core/ppa
+    state: present
   tags:
     - install
     - productivity
@@ -82,8 +93,17 @@
     - install
     - productivity
 
+- name: Check if Git Delta is installed
+  ansible.builtin.command: which delta
+  register: delta_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - productivity
+
 - name: Install Git Delta
-  shell: |
+  ansible.builtin.shell: |
     curl -L -s https://api.github.com/repos/dandavison/delta/releases/latest |
     grep -o -E "https://(.*)git-delta_(.*)_amd64.deb" |
     xargs -n 1 curl -fsSL -O &&
@@ -91,6 +111,7 @@
   args:
     chdir: /tmp
   become: true
+  when: delta_installed.rc != 0
   tags:
     - install
     - productivity

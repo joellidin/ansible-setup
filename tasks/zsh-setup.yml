@@ -108,7 +108,7 @@
     - starship
 
 - name: Install Starship
-  ansible.builtin.shell: /tmp/starship.sh -y
+  ansible.builtin.shell: sh /tmp/starship.sh -y
   when: starship_installed.rc != 0
   tags:
     - install

@@ -73,7 +73,7 @@
     - tmux
 
 - name: Install fonts
-  import_tasks: tasks/fonts-setup.yml
+  ansible.builtin.import_tasks: "{{ project_root | default(playbook_dir) }}/tasks/fonts-setup.yml"
   tags:
     - install
     - core
