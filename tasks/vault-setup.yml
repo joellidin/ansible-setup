@@ -1,28 +1,72 @@
-- name: Download the Hashicorp public signing key
-  shell: |
-    wget -O- https://apt.releases.hashicorp.com/gpg | \
-    sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+- name: Check if Hashicorp GPG key exists
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  register: hashicorp_gpg_key
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Download Hashicorp GPG key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /tmp/hashicorp.gpg.asc
+    mode: '0644'
+  when: not hashicorp_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Dearmor and install Hashicorp GPG key
+  ansible.builtin.shell: |
+    gpg --dearmor < /tmp/hashicorp.gpg.asc > /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  become: true
+  when: not hashicorp_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Set permissions on Hashicorp GPG key
+  ansible.builtin.file:
+    path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    mode: '0644'
+  become: true
+  when: not hashicorp_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Get Ubuntu codename
+  ansible.builtin.command: lsb_release -cs
+  register: ubuntu_codename
+  changed_when: false
+  tags:
+    - install
+    - productivity
+    - vault
+
+- name: Add Hashicorp apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ubuntu_codename.stdout }} main"
+    filename: hashicorp
+    state: present
   become: true
   tags:
     - install
     - productivity
     - vault
 
-- name: Add the hashicorp apt repository
-  shell: |
-    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
-    sudo tee /etc/apt/sources.list.d/hashicorp.list
-  become: true
-  tags:
-    - install
-    - productivity
-    - vault
-
-- name: Update apt and install vault
-  become: true
-  apt:
-    update_cache: yes
+- name: Install Vault
+  ansible.builtin.apt:
     name: vault
+    state: present
+    update_cache: true
+  become: true
   tags:
     - install
     - productivity
