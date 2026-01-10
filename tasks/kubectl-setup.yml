@@ -1,36 +1,74 @@
-- name: Set kubectl version
-  set_fact: 
-    kubectl_version: v1.29
-  tags:
-    - install
-    - productivity
-    - kubectl
-
-- name: Download the Google Cloud public signing key
-  shell: |
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubectl_version }}/deb/Release.key | \
-    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
   become: true
   tags:
     - install
     - productivity
     - kubectl
 
-- name: Add the Kubernetes apt repository
-  shell: |
-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_version }}/deb/ /' | \
-    tee /etc/apt/sources.list.d/kubernetes.list
+- name: Check if Kubernetes GPG key exists
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  register: k8s_gpg_key
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Download Kubernetes GPG key
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/{{ kubectl_version | default('v1.31') }}/deb/Release.key"
+    dest: /tmp/kubernetes.gpg.asc
+    mode: '0644'
+  when: not k8s_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Dearmor and install Kubernetes GPG key
+  ansible.builtin.shell: |
+    gpg --dearmor < /tmp/kubernetes.gpg.asc > /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+  when: not k8s_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Set permissions on Kubernetes GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    mode: '0644'
+  become: true
+  when: not k8s_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - kubectl
+
+- name: Add Kubernetes apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubectl_version | default('v1.31') }}/deb/ /"
+    filename: kubernetes
+    state: present
   become: true
   tags:
     - install
     - productivity
     - kubectl
 
-- name: Update apt and install kubectl
-  become: true
-  apt:
-    update_cache: yes
+- name: Install kubectl
+  ansible.builtin.apt:
     name: kubectl
+    state: present
+    update_cache: true
+  become: true
   tags:
     - install
     - productivity
