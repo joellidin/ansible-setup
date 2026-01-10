@@ -1,5 +1,5 @@
 - name: Check if Neovim is installed
-  command: nvim --version
+  ansible.builtin.command: nvim --version
   register: nvim_installed
   changed_when: false
   failed_when: false
@@ -7,41 +7,52 @@
     - install
     - neovim
 
-- name: Clone or update Neovim repository
-  ansible.builtin.git:
-    repo: "{{ neovim_repo | default('https://github.com/neovim/neovim.git') }}"
-    dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
-    version: stable
-    update: yes
-    force: no
-  register: nvim_clone
+- name: Build and install Neovim from source
   tags:
     - install
     - neovim
+  block:
+    - name: Clone or update Neovim repository
+      ansible.builtin.git:
+        repo: "{{ neovim_repo | default('https://github.com/neovim/neovim.git') }}"
+        dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+        version: stable
+        update: yes
+        force: no
+      register: nvim_clone
 
-- name: Build Neovim
-  community.general.make:
-    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
-    params:
-      CMAKE_BUILD_TYPE: RelWithDebInfo
-  when: nvim_clone.changed or nvim_installed.rc != 0
-  register: nvim_build
-  tags:
-    - install
-    - neovim
+    - name: Build Neovim
+      community.general.make:
+        chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+        params:
+          CMAKE_BUILD_TYPE: RelWithDebInfo
+      when: nvim_clone.changed or nvim_installed.rc != 0
+      register: nvim_build
 
-- name: Install Neovim
-  become: true
-  community.general.make:
-    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
-    target: install
-  when: nvim_build.changed | default(false)
-  tags:
-    - install
-    - neovim
+    - name: Install Neovim
+      become: true
+      community.general.make:
+        chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
+        target: install
+      when: nvim_build.changed | default(false)
+
+  rescue:
+    - name: Neovim build failed - display error
+      ansible.builtin.debug:
+        msg: |
+          Neovim build failed. This is often due to missing dependencies.
+          Please ensure build requirements are installed:
+            sudo apt install ninja-build gettext cmake g++ pkg-config unzip curl
+
+          You can also try cleaning the build directory:
+            rm -rf {{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim/build
+
+    - name: Fail with helpful message
+      ansible.builtin.fail:
+        msg: "Neovim build failed. See above for troubleshooting steps."
 
 - name: Check if StyLua is installed
-  shell: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/bin/stylua --version"
+  ansible.builtin.shell: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/bin/stylua --version"
   register: stylua_installed
   changed_when: false
   failed_when: false
@@ -50,7 +61,7 @@
     - neovim
 
 - name: Install StyLua
-  shell: ". {{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/env && cargo install stylua"
+  ansible.builtin.shell: ". {{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}/env && cargo install stylua"
   when: stylua_installed.rc != 0
   tags:
     - install
@@ -60,6 +71,7 @@
   ansible.builtin.file:
     path: "{{ nvim_data_path | default(ansible_env.HOME + '/.local/share/nvim') }}/databases"
     state: directory
+    mode: '0755'
   tags:
     - install
     - dotfiles
@@ -69,6 +81,7 @@
   ansible.builtin.file:
     path: "{{ nvim_data_path | default(ansible_env.HOME + '/.local/share/nvim') }}/databases/telescope_history.sqlite3"
     state: touch
+    mode: '0644'
     modification_time: preserve
     access_time: preserve
   tags:
