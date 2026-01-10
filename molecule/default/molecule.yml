@@ -31,10 +31,14 @@ provisioner:
     host_vars:
       ubuntu-noble:
         ansible_user: testuser
+  options:
+    skip-tags: gpg
   config_options:
     defaults:
       callbacks_enabled: profile_tasks
-      stdout_callback: yaml
+      stdout_callback: default
+      callback_result_format: yaml
+      roles_path: ../../roles
 
 verifier:
   name: ansible

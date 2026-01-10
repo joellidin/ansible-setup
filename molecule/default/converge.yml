@@ -5,6 +5,9 @@
   gather_facts: true
 
   vars:
+    # Project root for relative imports
+    project_root: "{{ playbook_dir }}/../.."
+
     # Override paths for test environment
     local_bin: "{{ ansible_env.HOME }}/.local/bin"
     local_src: "{{ ansible_env.HOME }}/.local/src"
@@ -40,7 +43,7 @@
       become: true
       ansible.builtin.apt:
         update_cache: true
-        cache_valid_time: 3600
+        cache_valid_time: 0
 
   tasks:
     # Test core setup and productivity tools
@@ -57,7 +60,7 @@
     # Test docker role
     - name: Include docker role
       ansible.builtin.include_role:
-        name: docker
+        name: "{{ project_root }}/roles/docker"
       tags:
         - docker
 
