@@ -1,7 +1,7 @@
 ---
 - name: Install Build Requirements for Neovim
   become: true
-  package:
+  ansible.builtin.apt:
     name:
       - ninja-build
       - gettext
@@ -16,6 +16,9 @@
       - curl
       - doxygen
       - build-essential
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
   tags:
     - install
     - neovim

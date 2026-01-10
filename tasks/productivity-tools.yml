@@ -42,17 +42,9 @@
     - install
     - productivity
 
-- name: Update apt-get repo and cache
-  become: true
-  apt:
-    update_cache: yes
-  tags:
-    - install
-    - productivity
-
 - name: Install Productivity Packages
   become: true
-  package:
+  ansible.builtin.apt:
     name:
       - curl
       - xcape
@@ -76,19 +68,23 @@
       - git
       - fd-find
       - plocate
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
   tags:
     - install
     - productivity
 
 - name: Install Packages for Yubico
   become: true
-  package:
+  ansible.builtin.apt:
     name:
       - scdaemon
       - yubikey-manager
       - libpam-yubico
       - libpam-u2f
       - libu2f-udev
+    state: present
   tags:
     - install
     - productivity
