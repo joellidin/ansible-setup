@@ -1,0 +1,108 @@
+---
+# Pre-flight checks to validate system state before running playbook
+
+- name: Check minimum Ansible version
+  ansible.builtin.assert:
+    that: ansible_version.full is version('2.14', '>=')
+    fail_msg: "Ansible 2.14+ required, found {{ ansible_version.full }}"
+    success_msg: "Ansible version {{ ansible_version.full }} is supported"
+  tags:
+    - always
+    - preflight
+
+- name: Check available disk space on root
+  ansible.builtin.assert:
+    that: item.size_available > 5368709120
+    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ (item.size_available / 1073741824) | round(2) }}GB)"
+    success_msg: "Disk space OK: {{ (item.size_available / 1073741824) | round(2) }}GB available on {{ item.mount }}"
+  loop: "{{ ansible_mounts | selectattr('mount', 'equalto', '/') | list }}"
+  tags:
+    - always
+    - preflight
+
+- name: Check available disk space on home
+  ansible.builtin.assert:
+    that: item.size_available > 5368709120
+    fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ (item.size_available / 1073741824) | round(2) }}GB)"
+    success_msg: "Disk space OK: {{ (item.size_available / 1073741824) | round(2) }}GB available on {{ item.mount }}"
+  loop: "{{ ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list }}"
+  when: ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list | length > 0
+  tags:
+    - always
+    - preflight
+
+- name: Check internet connectivity (GitHub)
+  ansible.builtin.uri:
+    url: https://github.com
+    method: HEAD
+    timeout: 10
+  register: github_check
+  failed_when: false
+  tags:
+    - always
+    - preflight
+
+- name: Check internet connectivity (apt repositories)
+  ansible.builtin.uri:
+    url: https://archive.ubuntu.com
+    method: HEAD
+    timeout: 10
+  register: apt_check
+  failed_when: false
+  tags:
+    - always
+    - preflight
+
+- name: Warn if GitHub is unreachable
+  ansible.builtin.debug:
+    msg: "WARNING: Cannot reach GitHub ({{ github_check.status | default('timeout') }}). Git clone tasks will fail."
+  when: github_check.status is not defined or github_check.status != 200
+  tags:
+    - always
+    - preflight
+
+- name: Warn if apt repositories are unreachable
+  ansible.builtin.debug:
+    msg: "WARNING: Cannot reach Ubuntu apt repositories. Package installation may fail."
+  when: apt_check.status is not defined or apt_check.status != 200
+  tags:
+    - always
+    - preflight
+
+- name: Check if running as root
+  ansible.builtin.assert:
+    that: ansible_user_id != 'root'
+    fail_msg: "This playbook should not be run as root. Run as a regular user with sudo privileges."
+    success_msg: "Running as user {{ ansible_user_id }}"
+  tags:
+    - always
+    - preflight
+
+- name: Check sudo access
+  ansible.builtin.command: sudo -n true
+  register: sudo_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - always
+    - preflight
+
+- name: Warn if sudo requires password
+  ansible.builtin.debug:
+    msg: "Note: sudo requires a password. You may be prompted during execution."
+  when: sudo_check.rc != 0
+  tags:
+    - always
+    - preflight
+
+- name: Display system information
+  ansible.builtin.debug:
+    msg: |
+      System: {{ ansible_distribution }} {{ ansible_distribution_version }}
+      Kernel: {{ ansible_kernel }}
+      Architecture: {{ ansible_architecture }}
+      User: {{ ansible_user_id }}
+      Home: {{ ansible_env.HOME }}
+  tags:
+    - always
+    - preflight
