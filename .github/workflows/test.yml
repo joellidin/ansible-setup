@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Molecule tests
         run: |
-          uvx --with ansible --with molecule-plugins[docker] --with docker molecule test --scenario-name ${{ matrix.scenario }}
+          uvx --with ansible --with 'molecule-plugins[docker]' --with docker molecule test --scenario-name ${{ matrix.scenario }}
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
@@ -71,9 +71,9 @@ jobs:
 
       - name: Run idempotence test
         run: |
-          uvx --with ansible --with molecule-plugins[docker] --with docker molecule test --scenario-name default --destroy never
-          uvx --with ansible --with molecule-plugins[docker] --with docker molecule idempotence --scenario-name default
-          uvx --with ansible --with molecule-plugins[docker] --with docker molecule destroy --scenario-name default
+          uvx --with ansible --with 'molecule-plugins[docker]' --with docker molecule test --scenario-name default --destroy never
+          uvx --with ansible --with 'molecule-plugins[docker]' --with docker molecule idempotence --scenario-name default
+          uvx --with ansible --with 'molecule-plugins[docker]' --with docker molecule destroy --scenario-name default
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
