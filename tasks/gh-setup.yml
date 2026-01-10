@@ -1,54 +1,84 @@
-- name: Download Gpg Key
-  shell: |
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+- name: Check if GitHub CLI GPG key exists
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/githubcli-archive-keyring.gpg
+  register: gh_gpg_key
+  tags:
+    - install
+    - productivity
+    - gh
+
+- name: Download GitHub CLI GPG key
+  ansible.builtin.get_url:
+    url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    dest: /usr/share/keyrings/githubcli-archive-keyring.gpg
+    mode: '0644'
+  become: true
+  when: not gh_gpg_key.stat.exists
+  tags:
+    - install
+    - productivity
+    - gh
+
+- name: Get system architecture
+  ansible.builtin.command: dpkg --print-architecture
+  register: dpkg_arch
+  changed_when: false
+  tags:
+    - install
+    - productivity
+    - gh
+
+- name: Add GitHub CLI apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ dpkg_arch.stdout }} signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+    filename: github-cli
+    state: present
   become: true
   tags:
     - install
     - productivity
+    - gh
 
-- name: Download binary
-  shell: echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+- name: Install GitHub CLI
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    update_cache: true
   become: true
   tags:
     - install
     - productivity
+    - gh
 
-- name: Install gh-cli
-  package:
-    update-cache: true
-    name:
-      gh
-  become: true
-  tags:
-    - install
-    - productivity
-
-- name: Create gh Config Directory
+- name: Create gh config directory
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME')}}/.config/gh"
+    path: "{{ config_home | default(ansible_env.HOME + '/.config') }}/gh"
     state: directory
+    mode: '0700'
   tags:
     - install
     - dotfiles
     - productivity
+    - gh
 
 - name: Add gh config.yml
-  copy:
+  ansible.builtin.copy:
     src: "{{ src_gh_config }}"
-    dest: "{{ lookup('env', 'HOME') }}/.config/gh/config.yml"
-    mode: 0600
+    dest: "{{ config_home | default(ansible_env.HOME + '/.config') }}/gh/config.yml"
+    mode: '0600'
   tags:
     - install
     - dotfiles
     - productivity
+    - gh
 
 - name: Add gh hosts.yml
-  copy:
+  ansible.builtin.copy:
     src: "{{ src_gh_hosts }}"
-    dest: "{{ lookup('env', 'HOME') }}/.config/gh/hosts.yml"
-    mode: 0600
+    dest: "{{ config_home | default(ansible_env.HOME + '/.config') }}/gh/hosts.yml"
+    mode: '0600'
   tags:
     - install
     - dotfiles
     - productivity
+    - gh
