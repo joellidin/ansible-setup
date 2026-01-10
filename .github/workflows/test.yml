@@ -51,9 +51,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
 
+      - name: Install Ansible collections
+        run: |
+          uvx --from ansible-core ansible-galaxy collection install community.general
+
       - name: Run syntax check
         run: |
-          uvx --with ansible ansible-playbook local.yml --syntax-check
+          uvx --from ansible-core ansible-playbook -i localhost, local.yml --syntax-check
 
   idempotence-check:
     name: Idempotence Check

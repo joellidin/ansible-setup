@@ -1,0 +1,20 @@
+# Downloaded Ansible collections
+collections/
+
+# Ansible cache and temp files
+*.retry
+/tmp/ansible_facts_cache/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Molecule
+.molecule/

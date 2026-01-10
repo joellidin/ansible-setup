@@ -33,6 +33,10 @@ jobs:
           uvx ansible-lint --profile production
         continue-on-error: true
 
+      - name: Install Ansible collections
+        run: |
+          uvx --from ansible-core ansible-galaxy collection install community.general
+
       - name: Check syntax
         run: |
-          uvx --with ansible ansible-playbook local.yml --syntax-check
+          uvx --from ansible-core ansible-playbook -i localhost, local.yml --syntax-check
