@@ -113,6 +113,8 @@
         gopass_store_repo: ""
       tags:
         - gopass
+        - gopass-update
+        - update
 
     - name: Include browser role
       ansible.builtin.include_role:
@@ -126,24 +128,32 @@
         name: "{{ project_root }}/roles/rust"
       tags:
         - rust
+        - rust-update
+        - update
 
     - name: Include python role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/python"
       tags:
         - python
+        - python-update
+        - update
 
     - name: Include go role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/go"
       tags:
         - go
+        - go-update
+        - update
 
     - name: Include node role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/node"
       tags:
         - node
+        - node-update
+        - update
 
     # Test dev tool roles
     - name: Include neovim role
@@ -151,12 +161,16 @@
         name: "{{ project_root }}/roles/neovim"
       tags:
         - neovim
+        - neovim-update
+        - update
 
     - name: Include tmux role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/tmux"
       tags:
         - tmux
+        - tmux-update
+        - update
 
     - name: Include gh role
       ansible.builtin.include_role:
@@ -170,3 +184,5 @@
         name: "{{ project_root }}/roles/i3blocks"
       tags:
         - i3blocks
+        - i3blocks-update
+        - update
