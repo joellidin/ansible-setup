@@ -43,6 +43,8 @@
   tags:
     - install
     - node
+    - node-update
+    - update
 
 - name: Install Node.js {{ node_version }} via n
   ansible.builtin.command: "{{ node_n_bin }} {{ node_version }}"
@@ -54,4 +56,6 @@
   tags:
     - install
     - node
+    - node-update
+    - update
 

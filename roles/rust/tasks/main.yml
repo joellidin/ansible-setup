@@ -56,6 +56,20 @@
   tags:
     - install
     - rust
+    - rust-update
+    - update
+
+- name: Update Rust toolchains
+  ansible.builtin.command: rustup update
+  environment:
+    CARGO_HOME: "{{ rust_cargo_home }}"
+    RUSTUP_HOME: "{{ rust_rustup_home }}"
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+  register: rust_update_result
+  changed_when: "'Updated' in rust_update_result.stdout"
+  tags:
+    - rust-update
+    - update
 
 - name: Clean up rustup installer
   ansible.builtin.file:

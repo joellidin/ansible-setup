@@ -26,3 +26,14 @@
   tags:
     - install
     - python
+    - python-update
+    - update
+
+- name: Update uv
+  ansible.builtin.command: "{{ python_uv_bin }} self update"
+  register: python_uv_update_result
+  changed_when: "'Updated' in python_uv_update_result.stderr"
+  failed_when: false
+  tags:
+    - python-update
+    - update
