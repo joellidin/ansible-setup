@@ -1,0 +1,8 @@
+---
+# Python role defaults
+
+# Python version to install via uv
+python_version: "3.13"
+
+# uv binary location
+python_uv_bin: "{{ ansible_env.HOME }}/.local/bin/uv"

@@ -1,0 +1,55 @@
+---
+# Rust role - installs Rust toolchain via rustup
+
+- name: Check if cargo is installed
+  ansible.builtin.command: which cargo
+  environment:
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+  register: rust_cargo_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - rust
+
+- name: Download rustup installer
+  ansible.builtin.get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/sh.rustup.rs
+    mode: "0755"
+    force: true
+  when: rust_cargo_check.rc != 0
+  tags:
+    - install
+    - rust
+
+- name: Install Rust via rustup
+  ansible.builtin.command: /tmp/sh.rustup.rs -y
+  environment:
+    CARGO_HOME: "{{ rust_cargo_home }}"
+    RUSTUP_HOME: "{{ rust_rustup_home }}"
+  when: rust_cargo_check.rc != 0
+  changed_when: true
+  tags:
+    - install
+    - rust
+
+- name: Set default toolchain
+  ansible.builtin.command: rustup default {{ rust_toolchain }}
+  environment:
+    CARGO_HOME: "{{ rust_cargo_home }}"
+    RUSTUP_HOME: "{{ rust_rustup_home }}"
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+  register: rust_toolchain_result
+  changed_when: "'unchanged' not in rust_toolchain_result.stdout"
+  tags:
+    - install
+    - rust
+
+- name: Clean up rustup installer
+  ansible.builtin.file:
+    path: /tmp/sh.rustup.rs
+    state: absent
+  tags:
+    - install
+    - rust

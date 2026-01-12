@@ -43,6 +43,22 @@
       tags:
         - install
         - regolith
+    - role: rust
+      tags:
+        - install
+        - rust
+    - role: python
+      tags:
+        - install
+        - python
+    - role: go
+      tags:
+        - install
+        - go
+    - role: node
+      tags:
+        - install
+        - node
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml
@@ -52,14 +68,6 @@
       ansible.builtin.import_tasks: tasks/vault-setup.yml
     - name: Setup ZSH and shell environment
       ansible.builtin.import_tasks: tasks/zsh-setup.yml
-    - name: Setup Rust toolchain
-      ansible.builtin.import_tasks: tasks/rust-setup.yml
-    - name: Setup Python with uv
-      ansible.builtin.import_tasks: tasks/python-setup.yml
-    - name: Setup Node.js
-      ansible.builtin.import_tasks: tasks/node-setup.yml
-    - name: Setup Go language
-      ansible.builtin.import_tasks: tasks/go-setup.yml
     - name: Clone repositories in parallel
       ansible.builtin.import_tasks: tasks/parallel-clones.yml
     - name: Setup Neovim

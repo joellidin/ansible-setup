@@ -1,0 +1,52 @@
+---
+# Node role - installs Node.js via n version manager
+
+- name: Install nodejs and npm from apt
+  become: true
+  ansible.builtin.apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - install
+    - node
+
+- name: Configure npm prefix
+  ansible.builtin.command: npm config set prefix "{{ node_npm_prefix }}"
+  changed_when: false
+  tags:
+    - install
+    - node
+
+- name: Configure npm cache
+  ansible.builtin.command: npm config set cache "{{ node_npm_cache }}"
+  changed_when: false
+  tags:
+    - install
+    - node
+
+- name: Install n version manager
+  community.general.npm:
+    name: n
+    global: true
+  tags:
+    - install
+    - node
+
+- name: Install Node.js {{ node_version }} via n
+  ansible.builtin.command: "{{ node_n_bin }} {{ node_version }}"
+  register: node_n_result
+  changed_when: "'installed' in node_n_result.stdout"
+  tags:
+    - install
+    - node
+
+- name: Clean up temporary npm config
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/npm/npmrc"
+    state: absent
+  tags:
+    - install
+    - node

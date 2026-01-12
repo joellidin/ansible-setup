@@ -1,6 +1,8 @@
 ---
+# Go role - installs Go programming language
+
 - name: Check current Go version
-  ansible.builtin.command: "{{ go_install_path | default('/usr/local/go') }}/bin/go version"
+  ansible.builtin.command: "{{ go_install_path }}/bin/go version"
   register: go_version_check
   changed_when: false
   failed_when: false
@@ -16,45 +18,42 @@
     - install
     - go
 
-- name: Set Go needs install
+- name: Determine if Go installation needed
   ansible.builtin.set_fact:
     go_needs_install: >-
       {{ go_version_check.rc != 0 or
-         (go_installed_version | default('0')) is version(go_version | default('1.23.4'), '<') }}
+         (go_installed_version | default('0')) is version(go_version, '<') }}
   tags:
     - install
     - go
 
 - name: Download Go tarball
-  vars:
-    go_ver: "{{ go_version | default('1.23.4') }}"
-    default_url: "https://go.dev/dl/go{{ go_ver }}.linux-amd64.tar.gz"
   ansible.builtin.get_url:
-    url: "{{ go_download_url | default(default_url) }}"
-    dest: "/tmp/go{{ go_ver }}.linux-amd64.tar.gz"
+    url: "{{ go_download_url | default('https://go.dev/dl/go' + go_version + '.linux-amd64.tar.gz') }}"
+    dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
     checksum: "{{ go_checksum | default(omit) }}"
-    mode: '0440'
+    mode: "0440"
   when: go_needs_install
   tags:
     - install
     - go
 
 - name: Remove old Go installation
-  ansible.builtin.file:
-    path: "{{ go_install_path | default('/usr/local/go') }}"
-    state: absent
   become: true
+  ansible.builtin.file:
+    path: "{{ go_install_path }}"
+    state: absent
   when: go_needs_install
   tags:
     - install
     - go
 
 - name: Extract Go tarball
+  become: true
   ansible.builtin.unarchive:
-    src: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
+    src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
     dest: /usr/local
     remote_src: true
-  become: true
   when: go_needs_install
   tags:
     - install
@@ -62,7 +61,7 @@
 
 - name: Clean up Go tarball
   ansible.builtin.file:
-    path: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
+    path: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
     state: absent
   when: go_needs_install
   tags:

@@ -1,0 +1,14 @@
+---
+# Go role defaults
+
+# Go version to install
+go_version: "1.23.4"
+
+# Installation path
+go_install_path: /usr/local/go
+
+# Download URL (auto-generated if not specified)
+# go_download_url: https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz
+
+# Optional checksum for verification
+# go_checksum: sha256:...
