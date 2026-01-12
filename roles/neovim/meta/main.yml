@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Build and install Neovim from source with StyLua
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - neovim
+    - editor
+    - lua
+
+dependencies:
+  - role: core
