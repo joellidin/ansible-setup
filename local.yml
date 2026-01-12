@@ -47,26 +47,38 @@
       tags:
         - install
         - rust
+        - rust-update
+        - update
     - role: python
       tags:
         - install
         - python
+        - python-update
+        - update
     - role: go
       tags:
         - install
         - go
+        - go-update
+        - update
     - role: node
       tags:
         - install
         - node
+        - node-update
+        - update
     - role: neovim
       tags:
         - install
         - neovim
+        - neovim-update
+        - update
     - role: tmux
       tags:
         - install
         - tmux
+        - tmux-update
+        - update
     - role: gh
       vars:
         gh_config_src: "{{ src_gh_config }}"
@@ -78,6 +90,8 @@
       tags:
         - install
         - i3blocks
+        - i3blocks-update
+        - update
     - role: zsh
       tags:
         - install
@@ -96,6 +110,8 @@
       tags:
         - install
         - gopass
+        - gopass-update
+        - update
     - role: browser
       tags:
         - install
