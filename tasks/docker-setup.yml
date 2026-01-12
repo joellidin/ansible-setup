@@ -28,7 +28,7 @@
 
 - name: Update apt and install docker packages
   become: true
-  apt:
+  ansible.builtin.apt:
     name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"]
     state: latest
     update_cache: true
