@@ -1,0 +1,50 @@
+---
+# Build dependencies installation tasks
+
+- name: Install build requirements for Neovim
+  become: true
+  ansible.builtin.apt:
+    name: "{{ core_neovim_build_deps }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ core_apt_cache_valid_time }}"
+  tags:
+    - install
+    - core
+    - neovim
+
+- name: Install build requirements for st
+  become: true
+  ansible.builtin.apt:
+    name: "{{ core_st_build_deps }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ core_apt_cache_valid_time }}"
+  tags:
+    - install
+    - core
+    - st
+
+- name: Install build requirements for eww
+  become: true
+  ansible.builtin.apt:
+    name: "{{ core_eww_build_deps }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ core_apt_cache_valid_time }}"
+  tags:
+    - install
+    - core
+    - eww
+
+- name: Install build requirements for tmux
+  become: true
+  ansible.builtin.apt:
+    name: "{{ core_tmux_build_deps }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ core_apt_cache_valid_time }}"
+  tags:
+    - install
+    - core
+    - tmux
