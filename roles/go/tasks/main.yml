@@ -1,0 +1,69 @@
+---
+# Go role - installs Go programming language
+
+- name: Check current Go version
+  ansible.builtin.command: "{{ go_install_path }}/bin/go version"
+  register: go_version_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - go
+
+- name: Extract installed Go version
+  ansible.builtin.set_fact:
+    go_installed_version: "{{ go_version_check.stdout | regex_search('go([0-9.]+)', '\\1') | first | default('0') }}"
+  when: go_version_check.rc == 0
+  tags:
+    - install
+    - go
+
+- name: Determine if Go installation needed
+  ansible.builtin.set_fact:
+    go_needs_install: >-
+      {{ go_version_check.rc != 0 or
+         (go_installed_version | default('0')) is version(go_version, '<') }}
+  tags:
+    - install
+    - go
+
+- name: Download Go tarball
+  ansible.builtin.get_url:
+    url: "{{ go_download_url | default('https://go.dev/dl/go' + go_version + '.linux-amd64.tar.gz') }}"
+    dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+    checksum: "{{ go_checksum | default(omit) }}"
+    mode: "0440"
+  when: go_needs_install
+  tags:
+    - install
+    - go
+
+- name: Remove old Go installation
+  become: true
+  ansible.builtin.file:
+    path: "{{ go_install_path }}"
+    state: absent
+  when: go_needs_install
+  tags:
+    - install
+    - go
+
+- name: Extract Go tarball
+  become: true
+  ansible.builtin.unarchive:
+    src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: /usr/local
+    remote_src: true
+  when: go_needs_install
+  tags:
+    - install
+    - go
+
+- name: Clean up Go tarball
+  ansible.builtin.file:
+    path: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+    state: absent
+  when: go_needs_install
+  tags:
+    - install
+    - go
