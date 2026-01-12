@@ -33,7 +33,7 @@
         path: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"
         state: directory
 
-    - name: clone into repo
+    - name: Clone into repo
       ansible.builtin.git:
         repo: "https://github.com/joellidin/private-pass.git"
         dest: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"

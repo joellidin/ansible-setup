@@ -7,7 +7,7 @@
     - install
     - productivity
 
-- name: regolith-linux
+- name: Setup Regolith Linux
   become: true
   block:
     - name: Check if regolith keyring exists
@@ -33,7 +33,7 @@
     - install
     - productivity
 
-- name: git-core ppa (ppa:git-core/ppa)
+- name: Add git-core PPA
   become: true
   ansible.builtin.apt_repository:
     repo: ppa:git-core/ppa

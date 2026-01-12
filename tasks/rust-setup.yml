@@ -1,5 +1,5 @@
 ---
-- name: check if cargo is installed
+- name: Check if cargo is installed
   ansible.builtin.shell: which cargo
   register: cargo_exists
   ignore_errors: true
