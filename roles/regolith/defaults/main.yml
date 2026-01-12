@@ -1,0 +1,14 @@
+---
+# Regolith role default variables
+
+# Keyring path
+regolith_keyring_path: /usr/share/keyrings/regolith-archive-keyring.gpg
+
+# Regolith key URL
+regolith_key_url: https://regolith-desktop.org/regolith.key
+
+# Repository URL (adjust for your Ubuntu version)
+regolith_repo_url: https://regolith-desktop.org/release-ubuntu-jammy-amd64
+
+# Ubuntu codename
+regolith_ubuntu_codename: jammy

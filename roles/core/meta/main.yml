@@ -1,0 +1,23 @@
+---
+# Role metadata
+
+galaxy_info:
+  author: Joel Lidin
+  description: Core build dependencies and fonts setup for development environment
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+  galaxy_tags:
+    - development
+    - build
+    - fonts
+    - neovim
+    - tmux
+
+dependencies: []

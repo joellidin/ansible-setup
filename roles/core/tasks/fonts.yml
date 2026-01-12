@@ -1,0 +1,32 @@
+---
+# Fonts installation tasks
+
+- name: Create fonts directory
+  ansible.builtin.file:
+    path: "{{ core_fonts_dir }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - core
+    - fonts
+
+- name: Copy fonts to fonts directory
+  ansible.builtin.copy:
+    src: "{{ core_fonts_source_dir }}/"
+    dest: "{{ core_fonts_dir }}"
+    mode: preserve
+  register: core_fonts_copied
+  tags:
+    - install
+    - core
+    - fonts
+
+- name: Refresh font cache
+  ansible.builtin.command: fc-cache -frv
+  when: core_fonts_copied.changed
+  changed_when: true
+  tags:
+    - install
+    - core
+    - fonts

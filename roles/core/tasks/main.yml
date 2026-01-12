@@ -1,0 +1,16 @@
+---
+# Core role main tasks
+
+- name: Include build dependencies tasks
+  ansible.builtin.include_tasks: build-deps.yml
+  tags:
+    - install
+    - core
+    - build-deps
+
+- name: Include fonts tasks
+  ansible.builtin.include_tasks: fonts.yml
+  tags:
+    - install
+    - core
+    - fonts

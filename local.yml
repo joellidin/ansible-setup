@@ -27,11 +27,25 @@
       tags:
         - install
         - docker
+    - role: core
+      tags:
+        - install
+        - core
+    - role: dotfiles
+      tags:
+        - install
+        - dotfiles
+    - role: gpg
+      tags:
+        - install
+        - gpg
+    - role: regolith
+      tags:
+        - install
+        - regolith
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml
-    - name: Setup core build dependencies
-      ansible.builtin.import_tasks: tasks/core-setup.yml
     - name: Setup kubectl
       ansible.builtin.import_tasks: tasks/kubectl-setup.yml
     - name: Setup HashiCorp Vault
@@ -46,8 +60,6 @@
       ansible.builtin.import_tasks: tasks/node-setup.yml
     - name: Setup Go language
       ansible.builtin.import_tasks: tasks/go-setup.yml
-    - name: Setup dotfiles
-      ansible.builtin.import_tasks: tasks/dotfiles.yml
     - name: Clone repositories in parallel
       ansible.builtin.import_tasks: tasks/parallel-clones.yml
     - name: Setup Neovim

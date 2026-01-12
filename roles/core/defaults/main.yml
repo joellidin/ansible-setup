@@ -1,0 +1,60 @@
+---
+# Core role defaults
+
+# Path variables
+core_local_share: "{{ ansible_env.HOME }}/.local/share"
+core_fonts_dir: "{{ core_local_share }}/fonts"
+core_fonts_source_dir: "{{ playbook_dir }}/fonts"
+
+# Build dependencies for Neovim
+core_neovim_build_deps:
+  - ninja-build
+  - gettext
+  - libtool
+  - libtool-bin
+  - autoconf
+  - automake
+  - cmake
+  - g++
+  - pkg-config
+  - unzip
+  - curl
+  - doxygen
+  - build-essential
+
+# Build dependencies for st (simple terminal)
+core_st_build_deps:
+  - libx11-dev
+  - xutils-dev
+  - autoconf
+  - make
+  - pkg-config
+  - libfontconfig1-dev
+  - libharfbuzz-dev
+  - libxft-dev
+  - libtool
+
+# Build dependencies for eww (ElKowars wacky widgets)
+core_eww_build_deps:
+  - libglib2.0-dev
+  - libcairo2-dev
+  - libgdk-pixbuf2.0-dev
+  - libpango1.0-dev
+  - libgdk3.0-cil-dev
+  - libgtk-3-dev
+  - libdbusmenu-glib-dev
+  - libdbusmenu-gtk3-dev
+
+# Build dependencies for tmux
+core_tmux_build_deps:
+  - libevent-dev
+  - libncurses5-dev
+  - libncursesw5-dev
+  - autoconf
+  - automake
+  - bison
+  - byacc
+  - pkg-config
+
+# APT cache valid time in seconds (1 hour)
+core_apt_cache_valid_time: 3600

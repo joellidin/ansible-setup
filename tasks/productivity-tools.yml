@@ -7,32 +7,6 @@
     - install
     - productivity
 
-- name: Setup Regolith Linux
-  become: true
-  block:
-    - name: Check if regolith keyring exists
-      ansible.builtin.stat:
-        path: /usr/share/keyrings/regolith-archive-keyring.gpg
-      register: regolith_keyring
-
-    - name: Download regolith key
-      ansible.builtin.shell: |
-        wget -qO - https://regolith-desktop.org/regolith.key | \
-        gpg --dearmor | sudo tee /usr/share/keyrings/regolith-archive-keyring.gpg > /dev/null
-      when: not regolith_keyring.stat.exists
-
-    - name: Add the repository url to apt
-      vars:
-        keyring: /usr/share/keyrings/regolith-archive-keyring.gpg
-        repo_url: https://regolith-desktop.org/release-ubuntu-jammy-amd64
-      ansible.builtin.copy:
-        dest: /etc/apt/sources.list.d/regolith.list
-        content: "deb [arch=amd64 signed-by={{ keyring }}] {{ repo_url }} jammy main\n"
-        mode: '0644'
-  tags:
-    - install
-    - productivity
-
 - name: Add git-core PPA
   become: true
   ansible.builtin.apt_repository:
@@ -63,7 +37,7 @@
       - sqlite3
       - libsqlite3-dev
       - ripgrep
-      - i3-gaps
+      - i3
       - python3-pip
       - git
       - fd-find
@@ -71,20 +45,6 @@
     state: present
     update_cache: true
     cache_valid_time: 3600
-  tags:
-    - install
-    - productivity
-
-- name: Install Packages for Yubico
-  become: true
-  ansible.builtin.apt:
-    name:
-      - scdaemon
-      - yubikey-manager
-      - libpam-yubico
-      - libpam-u2f
-      - libu2f-udev
-    state: present
   tags:
     - install
     - productivity
@@ -110,29 +70,4 @@
   when: delta_installed.rc != 0
   tags:
     - install
-    - productivity
-
-- name: Copy public key
-  ansible.builtin.copy:
-    src: "./encrypt-data/pub.key"
-    dest: /tmp/pub.key
-    mode: preserve
-  tags:
-    - install
-    - gpg
-    - productivity
-
-
-- name: Import Yubikey gpg key
-  ansible.builtin.shell: gpg --import /tmp/pub.key
-  tags:
-    - install
-    - gpg
-    - productivity
-
-- name: Trust key
-  ansible.builtin.shell: echo "A7A5F7E1CB6C0E868E98445899B478EFF8ED88CD:6:" | gpg --import-ownertrust
-  tags:
-    - install
-    - gpg
     - productivity

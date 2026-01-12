@@ -1,0 +1,84 @@
+---
+# Dotfiles role - manages dotfiles via bare git repository
+
+- name: Clone dotfiles repository
+  ansible.builtin.git:
+    repo: "{{ dotfiles_repo }}"
+    dest: "{{ dotfiles_dir }}"
+    bare: true
+    update: true
+    accept_hostkey: true
+    version: "{{ dotfiles_version }}"
+  tags:
+    - install
+    - dotfiles
+
+- name: Check if dotfiles already installed
+  ansible.builtin.stat:
+    path: "{{ dotfiles_home }}/.config/zsh/.zshrc"
+  register: dotfiles_zshrc
+  tags:
+    - install
+    - dotfiles
+
+- name: Create backup directory for configs
+  ansible.builtin.file:
+    path: "{{ dotfiles_backup_dir }}"
+    state: directory
+    mode: '0755'
+  when: not dotfiles_zshrc.stat.exists
+  tags:
+    - install
+    - dotfiles
+
+- name: Backup existing configs
+  ansible.builtin.shell: |
+    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ dotfiles_home }} checkout 2>&1 |
+    egrep '\s+\.' | awk {'print $1'} |
+    xargs -I{} mv {{ dotfiles_home }}/$(basename {}) {{ dotfiles_backup_dir }}/
+  changed_when: false
+  failed_when: false
+  when: not dotfiles_zshrc.stat.exists
+  tags:
+    - install
+    - dotfiles
+
+- name: Check if backup directory is empty
+  ansible.builtin.find:
+    paths: "{{ dotfiles_backup_dir }}"
+  register: dotfiles_backup_files
+  when: not dotfiles_zshrc.stat.exists
+  tags:
+    - install
+    - dotfiles
+
+- name: Remove backup directory if empty
+  ansible.builtin.file:
+    path: "{{ dotfiles_backup_dir }}"
+    state: absent
+  when:
+    - not dotfiles_zshrc.stat.exists
+    - dotfiles_backup_files.matched == 0
+  tags:
+    - install
+    - dotfiles
+
+- name: Install dotfiles configs
+  ansible.builtin.shell: >
+    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ dotfiles_home }} checkout
+  register: dotfiles_checkout
+  changed_when: dotfiles_checkout.rc == 0
+  failed_when: false
+  when: not dotfiles_zshrc.stat.exists
+  tags:
+    - install
+    - dotfiles
+
+- name: Hide untracked files
+  ansible.builtin.shell: |
+    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ dotfiles_home }} \
+      config --local status.showUntrackedFiles no
+  changed_when: false
+  tags:
+    - install
+    - dotfiles
