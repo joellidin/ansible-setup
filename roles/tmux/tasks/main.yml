@@ -1,0 +1,44 @@
+---
+# Tmux role - builds and installs tmux from source
+
+- name: Check if tmux is installed
+  ansible.builtin.command: tmux -V
+  register: tmux_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - tmux
+
+- name: Clone or update tmux repository
+  ansible.builtin.git:
+    repo: "{{ tmux_repo }}"
+    dest: "{{ tmux_src_dir }}"
+    version: "{{ tmux_version }}"
+    update: true
+    force: false
+  register: tmux_clone
+  tags:
+    - install
+    - tmux
+
+- name: Configure and build tmux
+  ansible.builtin.shell: sh autogen.sh && ./configure && make
+  args:
+    chdir: "{{ tmux_src_dir }}"
+  when: tmux_clone.changed or tmux_installed.rc != 0
+  register: tmux_build
+  changed_when: tmux_build.rc == 0
+  tags:
+    - install
+    - tmux
+
+- name: Install tmux
+  become: true
+  community.general.make:
+    chdir: "{{ tmux_src_dir }}"
+    target: install
+  when: tmux_build.changed | default(false)
+  tags:
+    - install
+    - tmux
