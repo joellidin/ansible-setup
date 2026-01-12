@@ -35,7 +35,7 @@
     - st
 
 - name: Patch libxft
-  import_tasks: tasks/libxft-setup.yml
+  ansible.builtin.import_tasks: tasks/libxft-setup.yml
   tags:
     - install
     - libxft

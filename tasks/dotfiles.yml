@@ -32,7 +32,7 @@
     - dotfiles
 
 - name: Check if Backup Directory is Empty
-  find:
+  ansible.builtin.find:
     paths: "{{ ansible_env.HOME }}/.config-backup"
   register: filesFound
   tags:

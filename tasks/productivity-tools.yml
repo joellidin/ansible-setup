@@ -1,7 +1,7 @@
 ---
 - name: Install wget
   become: true
-  package:
+  ansible.builtin.package:
     name: wget
   tags:
     - install

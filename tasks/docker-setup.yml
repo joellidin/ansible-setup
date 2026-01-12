@@ -38,7 +38,7 @@
 
 - name: Add docker group
   become: true
-  group:
+  ansible.builtin.group:
     name: docker
     state: present
   tags:

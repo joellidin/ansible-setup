@@ -19,7 +19,7 @@
     - node
 
 - name: Install N
-  npm:
+  community.general.npm:
     name: n
     global: yes
   tags:

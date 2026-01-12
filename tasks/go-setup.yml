@@ -9,7 +9,7 @@
     - go
 
 - name: Extract installed Go version
-  set_fact:
+  ansible.builtin.set_fact:
     go_installed_version: "{{ go_version_check.stdout | regex_search('go([0-9.]+)', '\\1') | first | default('0') }}"
   when: go_version_check.rc == 0
   tags:
@@ -17,7 +17,7 @@
     - go
 
 - name: Set Go needs install
-  set_fact:
+  ansible.builtin.set_fact:
     go_needs_install: >-
       {{ go_version_check.rc != 0 or
          (go_installed_version | default('0')) is version(go_version | default('1.23.4'), '<') }}
@@ -50,7 +50,7 @@
     - go
 
 - name: Extract Go tarball
-  unarchive:
+  ansible.builtin.unarchive:
     src: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
     dest: /usr/local
     remote_src: yes

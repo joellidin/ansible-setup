@@ -5,7 +5,7 @@
     src_gh_hosts: "./hosts.yml"
     src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
-    - import_tasks: tasks/preflight.yml
+    - ansible.builtin.import_tasks: tasks/preflight.yml
     - name: Update Apt
       become: true
       ansible.builtin.apt:
@@ -26,25 +26,25 @@
         - install
         - docker
   tasks:
-    - import_tasks: tasks/productivity-tools.yml
-    - import_tasks: tasks/core-setup.yml
-    - import_tasks: tasks/kubectl-setup.yml
-    - import_tasks: tasks/vault-setup.yml
-    - import_tasks: tasks/zsh-setup.yml
-    - import_tasks: tasks/rust-setup.yml
-    - import_tasks: tasks/python-setup.yml
-    - import_tasks: tasks/node-setup.yml
-    - import_tasks: tasks/go-setup.yml
-    - import_tasks: tasks/dotfiles.yml
-    - import_tasks: tasks/parallel-clones.yml
-    - import_tasks: tasks/nvim-setup.yml
+    - ansible.builtin.import_tasks: tasks/productivity-tools.yml
+    - ansible.builtin.import_tasks: tasks/core-setup.yml
+    - ansible.builtin.import_tasks: tasks/kubectl-setup.yml
+    - ansible.builtin.import_tasks: tasks/vault-setup.yml
+    - ansible.builtin.import_tasks: tasks/zsh-setup.yml
+    - ansible.builtin.import_tasks: tasks/rust-setup.yml
+    - ansible.builtin.import_tasks: tasks/python-setup.yml
+    - ansible.builtin.import_tasks: tasks/node-setup.yml
+    - ansible.builtin.import_tasks: tasks/go-setup.yml
+    - ansible.builtin.import_tasks: tasks/dotfiles.yml
+    - ansible.builtin.import_tasks: tasks/parallel-clones.yml
+    - ansible.builtin.import_tasks: tasks/nvim-setup.yml
     # - import_tasks: tasks/st-setup.yml
-    - import_tasks: tasks/i3blocks-setup.yml
+    - ansible.builtin.import_tasks: tasks/i3blocks-setup.yml
     # - import_tasks: tasks/eww-setup.yml
-    - import_tasks: tasks/tmux-setup.yml
-    - import_tasks: tasks/gh-setup.yml
-    - import_tasks: tasks/gopass-setup.yml
-    - import_tasks: tasks/brave-setup.yml
+    - ansible.builtin.import_tasks: tasks/tmux-setup.yml
+    - ansible.builtin.import_tasks: tasks/gh-setup.yml
+    - ansible.builtin.import_tasks: tasks/gopass-setup.yml
+    - ansible.builtin.import_tasks: tasks/brave-setup.yml
     # - import_tasks: tasks/slack-setup.yml
     # - import_tasks: tasks/projects-setup.yml
   post_tasks:
