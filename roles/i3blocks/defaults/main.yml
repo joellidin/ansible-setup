@@ -1,0 +1,8 @@
+---
+# i3blocks role defaults
+
+# Repository
+i3blocks_repo: https://github.com/vivien/i3blocks
+
+# Installation path
+i3blocks_src_dir: "{{ ansible_env.HOME }}/.local/src/i3blocks"
