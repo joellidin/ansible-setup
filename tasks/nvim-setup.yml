@@ -18,8 +18,8 @@
         repo: "{{ neovim_repo | default('https://github.com/neovim/neovim.git') }}"
         dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/neovim"
         version: stable
-        update: yes
-        force: no
+        update: true
+        force: false
       register: nvim_clone
 
     - name: Build Neovim

@@ -53,7 +53,7 @@
       ansible.builtin.apt:
         force_apt_get: true
         update_cache: true
-        upgrade: yes
+        upgrade: true
         state: present
       tags:
         - install

@@ -3,9 +3,9 @@
   ansible.builtin.git:
     repo: "https://github.com/joellidin/dotfiles.git"
     dest: "{{ ansible_env.HOME }}/.dotfiles"
-    bare: yes
-    update: yes
-    accept_hostkey: yes
+    bare: true
+    update: true
+    accept_hostkey: true
     version: main
   tags:
     - install

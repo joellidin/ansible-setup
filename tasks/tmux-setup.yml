@@ -13,8 +13,8 @@
   ansible.builtin.git:
     repo: "{{ tmux_repo | default('https://github.com/tmux/tmux.git') }}"
     dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/tmux"
-    update: yes
-    force: no
+    update: true
+    force: false
   register: tmux_clone
   tags:
     - install

@@ -53,7 +53,7 @@
   ansible.builtin.unarchive:
     src: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
     dest: /usr/local
-    remote_src: yes
+    remote_src: true
   become: true
   when: go_needs_install
   tags:

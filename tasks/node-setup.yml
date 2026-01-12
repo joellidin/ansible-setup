@@ -21,7 +21,7 @@
 - name: Install N
   community.general.npm:
     name: n
-    global: yes
+    global: true
   tags:
     - install
     - node

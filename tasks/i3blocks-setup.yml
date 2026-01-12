@@ -12,8 +12,8 @@
   ansible.builtin.git:
     repo: "{{ i3blocks_repo | default('https://github.com/vivien/i3blocks') }}"
     dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
-    update: yes
-    force: no
+    update: true
+    force: false
   register: i3blocks_clone
   tags:
     - install

@@ -13,7 +13,7 @@
     url: https://sh.rustup.rs
     dest: /tmp/sh.rustup.rs
     mode: '0755'
-    force: 'yes'
+    force: true
   tags:
     - install
     - rust
