@@ -1,4 +1,6 @@
 ---
+# i3blocks role - builds and installs i3blocks from source
+
 - name: Check if i3blocks is installed
   ansible.builtin.command: i3blocks -V
   register: i3blocks_installed
@@ -10,8 +12,8 @@
 
 - name: Clone or update i3blocks repository
   ansible.builtin.git:
-    repo: "{{ i3blocks_repo | default('https://github.com/vivien/i3blocks') }}"
-    dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
+    repo: "{{ i3blocks_repo }}"
+    dest: "{{ i3blocks_src_dir }}"
     update: true
     force: false
   register: i3blocks_clone
@@ -22,16 +24,17 @@
 - name: Configure i3blocks
   ansible.builtin.shell: ./autogen.sh && ./configure
   args:
-    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
+    chdir: "{{ i3blocks_src_dir }}"
   when: i3blocks_clone.changed or i3blocks_installed.rc != 0
   register: i3blocks_configure
+  changed_when: i3blocks_configure.rc == 0
   tags:
     - install
     - i3blocks
 
 - name: Build i3blocks
   community.general.make:
-    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
+    chdir: "{{ i3blocks_src_dir }}"
   when: i3blocks_configure.changed | default(false)
   register: i3blocks_build
   tags:
@@ -41,7 +44,7 @@
 - name: Install i3blocks
   become: true
   community.general.make:
-    chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
+    chdir: "{{ i3blocks_src_dir }}"
     target: install
   when: i3blocks_build.changed | default(false)
   tags:

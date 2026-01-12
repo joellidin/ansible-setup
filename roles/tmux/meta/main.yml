@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Build and install tmux from source
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - tmux
+    - terminal
+    - multiplexer
+
+dependencies:
+  - role: core

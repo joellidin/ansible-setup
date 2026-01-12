@@ -1,0 +1,9 @@
+---
+# Tmux role defaults
+
+# Repository and version
+tmux_repo: https://github.com/tmux/tmux.git
+tmux_version: master
+
+# Installation path
+tmux_src_dir: "{{ ansible_env.HOME }}/.local/src/tmux"

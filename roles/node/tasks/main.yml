@@ -35,18 +35,23 @@
     - install
     - node
 
-- name: Install Node.js {{ node_version }} via n
-  ansible.builtin.command: "{{ node_n_bin }} {{ node_version }}"
-  register: node_n_result
-  changed_when: "'installed' in node_n_result.stdout"
+- name: Check installed Node.js version
+  ansible.builtin.command: "{{ node_n_prefix }}/bin/node --version"
+  register: node_current_version
+  changed_when: false
+  failed_when: false
   tags:
     - install
     - node
 
-- name: Clean up temporary npm config
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.config/npm/npmrc"
-    state: absent
+- name: Install Node.js {{ node_version }} via n
+  ansible.builtin.command: "{{ node_n_bin }} {{ node_version }}"
+  environment:
+    N_PREFIX: "{{ node_n_prefix }}"
+  register: node_n_result
+  changed_when: true
+  when: node_current_version.rc != 0 or node_version not in node_current_version.stdout
   tags:
     - install
     - node
+

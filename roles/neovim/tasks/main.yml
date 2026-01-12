@@ -1,0 +1,93 @@
+---
+# Neovim role - builds and installs Neovim from source
+
+- name: Check if Neovim is installed
+  ansible.builtin.command: nvim --version
+  register: neovim_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - neovim
+
+- name: Build and install Neovim from source
+  tags:
+    - install
+    - neovim
+  block:
+    - name: Clone or update Neovim repository
+      ansible.builtin.git:
+        repo: "{{ neovim_repo }}"
+        dest: "{{ neovim_src_dir }}"
+        version: "{{ neovim_version }}"
+        update: true
+        force: false
+      register: neovim_clone
+
+    - name: Build Neovim
+      community.general.make:
+        chdir: "{{ neovim_src_dir }}"
+        params:
+          CMAKE_BUILD_TYPE: "{{ neovim_build_type }}"
+      when: neovim_clone.changed or neovim_installed.rc != 0
+      register: neovim_build
+
+    - name: Install Neovim
+      become: true
+      community.general.make:
+        chdir: "{{ neovim_src_dir }}"
+        target: install
+      when: neovim_build.changed | default(false)
+
+  rescue:
+    - name: Neovim build failed - display error
+      ansible.builtin.debug:
+        msg: |
+          Neovim build failed. This is often due to missing dependencies.
+          Please ensure build requirements are installed (core role).
+          You can also try cleaning the build directory:
+            rm -rf {{ neovim_src_dir }}/build
+
+    - name: Fail with helpful message
+      ansible.builtin.fail:
+        msg: "Neovim build failed. See above for troubleshooting steps."
+
+- name: Check if StyLua is installed
+  ansible.builtin.command: "{{ neovim_cargo_home }}/bin/stylua --version"
+  register: neovim_stylua_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - neovim
+
+- name: Install StyLua
+  ansible.builtin.shell: ". {{ neovim_cargo_home }}/env && cargo install stylua"
+  environment:
+    TMPDIR: "{{ ansible_env.HOME }}/.cache"
+    CARGO_TARGET_DIR: "{{ ansible_env.HOME }}/.cache/cargo-target"
+  when: neovim_stylua_check.rc != 0
+  changed_when: true
+  tags:
+    - install
+    - neovim
+
+- name: Create Neovim databases directory
+  ansible.builtin.file:
+    path: "{{ neovim_data_path }}/databases"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - neovim
+
+- name: Create Telescope database file
+  ansible.builtin.file:
+    path: "{{ neovim_data_path }}/databases/telescope_history.sqlite3"
+    state: touch
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  tags:
+    - install
+    - neovim
