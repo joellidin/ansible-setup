@@ -1,0 +1,9 @@
+---
+# Rust role defaults
+
+# Default toolchain (stable, nightly, beta)
+rust_toolchain: nightly
+
+# Installation paths (using XDG-style locations)
+rust_cargo_home: "{{ ansible_env.HOME }}/.local/share/cargo"
+rust_rustup_home: "{{ ansible_env.HOME }}/.local/share/rustup"
