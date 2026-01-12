@@ -78,25 +78,37 @@
       tags:
         - install
         - i3blocks
+    - role: zsh
+      tags:
+        - install
+        - zsh
+    - role: kubectl
+      tags:
+        - install
+        - kubectl
+    - role: vault
+      tags:
+        - install
+        - vault
+    - role: gopass
+      vars:
+        gopass_store_repo: "https://github.com/joellidin/private-pass.git"
+      tags:
+        - install
+        - gopass
+    - role: browser
+      tags:
+        - install
+        - browser
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml
-    - name: Setup kubectl
-      ansible.builtin.import_tasks: tasks/kubectl-setup.yml
-    - name: Setup HashiCorp Vault
-      ansible.builtin.import_tasks: tasks/vault-setup.yml
-    - name: Setup ZSH and shell environment
-      ansible.builtin.import_tasks: tasks/zsh-setup.yml
     - name: Clone repositories in parallel
       ansible.builtin.import_tasks: tasks/parallel-clones.yml
     # - name: Setup st terminal
     #   ansible.builtin.import_tasks: tasks/st-setup.yml
     # - name: Setup eww
     #   ansible.builtin.import_tasks: tasks/eww-setup.yml
-    - name: Setup gopass
-      ansible.builtin.import_tasks: tasks/gopass-setup.yml
-    - name: Setup Brave browser
-      ansible.builtin.import_tasks: tasks/brave-setup.yml
     # - name: Setup Slack
     #   ansible.builtin.import_tasks: tasks/slack-setup.yml
     # - name: Setup projects

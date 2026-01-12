@@ -1,0 +1,18 @@
+---
+# Gopass role defaults
+
+# Gopass version
+gopass_version: "1.16.1"
+
+# Download URL base
+gopass_download_base: https://github.com/gopasspw/gopass/releases/download
+gopass_download_file: "gopass-{{ gopass_version }}-linux-amd64.tar.gz"
+gopass_download_url: "{{ gopass_download_base }}/v{{ gopass_version }}/{{ gopass_download_file }}"
+
+# Installation paths
+gopass_bin_dir: "{{ ansible_env.HOME }}/.local/bin"
+gopass_omz_path: "{{ ansible_env.HOME }}/.local/src/oh-my-zsh"
+gopass_store_path: "{{ ansible_env.HOME }}/.local/share/gopass/stores/root"
+
+# Password store repository (optional)
+gopass_store_repo: ""

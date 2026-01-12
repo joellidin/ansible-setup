@@ -1,0 +1,12 @@
+---
+# ZSH role defaults
+
+# Oh-My-Zsh installation path
+zsh_omz_path: "{{ ansible_env.HOME }}/.local/src/oh-my-zsh"
+
+# ZSH state directory for history
+zsh_state_dir: "{{ ansible_env.HOME }}/.local/state/zsh"
+
+# Starship installer path (avoid /tmp noexec issues)
+zsh_starship_installer: >-
+  {{ ansible_env.XDG_CACHE_HOME | default(ansible_env.HOME + '/.cache') }}/starship-install.sh

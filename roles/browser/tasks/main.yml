@@ -1,0 +1,10 @@
+---
+# Browser role - installs web browsers
+
+- name: Install Brave browser
+  ansible.builtin.include_tasks: brave.yml
+  when: browser_choice == "brave"
+  tags:
+    - install
+    - browser
+    - brave

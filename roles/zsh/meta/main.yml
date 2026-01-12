@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Install ZSH with Oh-My-Zsh, plugins, and Starship prompt
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - zsh
+    - shell
+    - ohmyzsh
+    - starship
+
+dependencies: []
