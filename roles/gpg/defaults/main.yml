@@ -1,0 +1,19 @@
+---
+# GPG role default variables
+
+# GPG public key file source (relative to playbook)
+gpg_public_key_src: "./encrypt-data/pub.key"
+
+# GPG key fingerprint for trust
+gpg_key_fingerprint: "2D4B1A763449FE07B4F23B832C9D6FE03574E023"
+
+# Trust level (6 = ultimate)
+gpg_trust_level: "6"
+
+# Yubikey packages to install
+gpg_yubikey_packages:
+  - scdaemon
+  - yubikey-manager
+  - libpam-yubico
+  - libpam-u2f
+  - libu2f-udev

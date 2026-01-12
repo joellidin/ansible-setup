@@ -1,0 +1,54 @@
+---
+# GPG role - manages GPG keys and Yubikey integration
+
+- name: Install Yubikey packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ gpg_yubikey_packages }}"
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - install
+    - gpg
+    - yubikey
+
+- name: Copy GPG public key
+  ansible.builtin.copy:
+    src: "{{ gpg_public_key_src }}"
+    dest: /tmp/pub.key
+    mode: '0644'
+  tags:
+    - install
+    - gpg
+
+- name: Check if GPG key is already imported
+  ansible.builtin.shell: gpg --list-keys {{ gpg_key_fingerprint }}
+  register: gpg_key_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - gpg
+
+- name: Import GPG public key
+  ansible.builtin.shell: gpg --import /tmp/pub.key
+  when: gpg_key_check.rc != 0
+  changed_when: true
+  tags:
+    - install
+    - gpg
+
+- name: Set GPG key trust level
+  ansible.builtin.shell: echo "{{ gpg_key_fingerprint }}:{{ gpg_trust_level }}:" | gpg --import-ownertrust
+  changed_when: false
+  tags:
+    - install
+    - gpg
+
+- name: Clean up temporary key file
+  ansible.builtin.file:
+    path: /tmp/pub.key
+    state: absent
+  tags:
+    - install
+    - gpg
