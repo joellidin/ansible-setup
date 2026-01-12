@@ -108,8 +108,53 @@
       tags:
         - brave
 
-    - name: Include gh setup (without encrypted files)
-      ansible.builtin.import_tasks: ../../tasks/gh-setup.yml
+    # Test language roles
+    - name: Include rust role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/rust"
+      tags:
+        - rust
+
+    - name: Include python role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/python"
+      tags:
+        - python
+
+    - name: Include go role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/go"
+      tags:
+        - go
+
+    - name: Include node role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/node"
+      tags:
+        - node
+
+    # Test dev tool roles
+    - name: Include neovim role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/neovim"
+      tags:
+        - neovim
+
+    - name: Include tmux role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/tmux"
+      tags:
+        - tmux
+
+    - name: Include gh role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/gh"
       when: not skip_encrypted_files
       tags:
         - gh
+
+    - name: Include i3blocks role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/i3blocks"
+      tags:
+        - i3blocks

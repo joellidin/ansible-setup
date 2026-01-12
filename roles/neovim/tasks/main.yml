@@ -63,6 +63,9 @@
 
 - name: Install StyLua
   ansible.builtin.shell: ". {{ neovim_cargo_home }}/env && cargo install stylua"
+  environment:
+    TMPDIR: "{{ ansible_env.HOME }}/.cache"
+    CARGO_TARGET_DIR: "{{ ansible_env.HOME }}/.cache/cargo-target"
   when: neovim_stylua_check.rc != 0
   changed_when: true
   tags:
