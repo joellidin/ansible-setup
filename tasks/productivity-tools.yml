@@ -113,7 +113,7 @@
     - productivity
 
 - name: Copy public key
-  copy:
+  ansible.builtin.copy:
     src: "./encrypt-data/pub.key"
     dest: /tmp/pub.key
     mode: preserve
