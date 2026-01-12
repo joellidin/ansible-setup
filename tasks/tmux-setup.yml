@@ -1,6 +1,6 @@
 ---
 - name: Check if tmux is installed
-  command: tmux -V
+  ansible.builtin.command: tmux -V
   register: tmux_installed
   changed_when: false
   failed_when: false
