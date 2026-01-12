@@ -16,7 +16,7 @@
     - eww
 
 - name: Install eww
-  shell: ". $CARGO_HOME/env && cargo build --release --no-default-features --features x11"
+  ansible.builtin.shell: ". $CARGO_HOME/env && cargo build --release --no-default-features --features x11"
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/eww"
   tags:
@@ -25,7 +25,7 @@
 
 - name: Symlink to /usr/bin
   become: true
-  file:
+  ansible.builtin.file:
     src: "{{ lookup('env', 'HOME') }}/.local/src/eww/target/release/eww"
     dest: /usr/bin/eww
     state: link

@@ -49,7 +49,7 @@
   ansible.builtin.git:
     repo: "https://github.com/zsh-users/zsh-autosuggestions.git"
     dest: "{{ omz }}/custom/plugins/zsh-autosuggestions"
-    update: yes
+    update: true
   tags:
     - install
     - productivity
@@ -62,7 +62,7 @@
   ansible.builtin.git:
     repo: "https://github.com/joshskidmore/zsh-fzf-history-search.git"
     dest: "{{ omz }}/custom/plugins/zsh-fzf-history-search"
-    update: yes
+    update: true
   tags:
     - install
     - productivity
@@ -75,7 +75,7 @@
   ansible.builtin.git:
     repo: "https://github.com/zsh-users/zsh-syntax-highlighting.git"
     dest: "{{ omz }}/custom/plugins/zsh-syntax-highlighting"
-    update: yes
+    update: true
   tags:
     - install
     - productivity

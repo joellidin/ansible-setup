@@ -4,16 +4,16 @@
     repo: "https://gitlab.freedesktop.org/xorg/lib/libxft.git"
     dest: /tmp/libxft
 - name: Configure libxft
-  shell: ./autogen.sh && ./configure --prefix=/usr --sysconfdir=/etc --disable-statis && make
+  ansible.builtin.shell: ./autogen.sh && ./configure --prefix=/usr --sysconfdir=/etc --disable-statis && make
   args:
     chdir: /tmp/libxft
 
 - name: Install patched libxft
-  shell: make install
+  ansible.builtin.shell: make install
   become: true
   args:
     chdir: /tmp/libxft
 
 - name: Symlink the patched libxft
-  shell: ln -sf /usr/lib/libXft.so /usr/lib/x86_64-linux-gnu/libXft.so.2.3.4 && ldconfig
+  ansible.builtin.shell: ln -sf /usr/lib/libXft.so /usr/lib/x86_64-linux-gnu/libXft.so.2.3.4 && ldconfig
   become: true

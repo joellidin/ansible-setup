@@ -1,6 +1,6 @@
 ---
 - name: Check if i3blocks is installed
-  command: i3blocks -V
+  ansible.builtin.command: i3blocks -V
   register: i3blocks_installed
   changed_when: false
   failed_when: false
@@ -12,15 +12,15 @@
   ansible.builtin.git:
     repo: "{{ i3blocks_repo | default('https://github.com/vivien/i3blocks') }}"
     dest: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
-    update: yes
-    force: no
+    update: true
+    force: false
   register: i3blocks_clone
   tags:
     - install
     - i3blocks
 
 - name: Configure i3blocks
-  shell: ./autogen.sh && ./configure
+  ansible.builtin.shell: ./autogen.sh && ./configure
   args:
     chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/i3blocks"
   when: i3blocks_clone.changed or i3blocks_installed.rc != 0

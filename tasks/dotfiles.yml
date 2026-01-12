@@ -3,9 +3,9 @@
   ansible.builtin.git:
     repo: "https://github.com/joellidin/dotfiles.git"
     dest: "{{ ansible_env.HOME }}/.dotfiles"
-    bare: yes
-    update: yes
-    accept_hostkey: yes
+    bare: true
+    update: true
+    accept_hostkey: true
     version: main
   tags:
     - install
@@ -23,7 +23,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: |
+  ansible.builtin.shell: |
     /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout 2>&1 |
     egrep '\s+\.' | awk {'print $1'} |
     xargs -I{} mv {{ home }}/$(basename {}) {{ home }}/.config-backup/
@@ -32,7 +32,7 @@
     - dotfiles
 
 - name: Check if Backup Directory is Empty
-  find:
+  ansible.builtin.find:
     paths: "{{ ansible_env.HOME }}/.config-backup"
   register: filesFound
   tags:
@@ -52,7 +52,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout
+  ansible.builtin.shell: /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout
   tags:
     - install
     - dotfiles
@@ -61,7 +61,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: |
+  ansible.builtin.shell: |
     /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} \
       config --local status.showUntrackedFiles no
   tags:

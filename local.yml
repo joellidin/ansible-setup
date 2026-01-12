@@ -1,14 +1,16 @@
 ---
-- hosts: localhost
+- name: Bootstrap development environment
+  hosts: localhost
   connection: local
   vars:
     src_gh_hosts: "./hosts.yml"
     src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
-    - import_tasks: tasks/preflight.yml
+    - name: Run preflight checks
+      ansible.builtin.import_tasks: tasks/preflight.yml
     - name: Update Apt
       become: true
-      apt:
+      ansible.builtin.apt:
         force_apt_get: true
         update_cache: true
         state: present
@@ -26,34 +28,55 @@
         - install
         - docker
   tasks:
-    - import_tasks: tasks/productivity-tools.yml
-    - import_tasks: tasks/core-setup.yml
-    - import_tasks: tasks/kubectl-setup.yml
-    - import_tasks: tasks/vault-setup.yml
-    - import_tasks: tasks/zsh-setup.yml
-    - import_tasks: tasks/rust-setup.yml
-    - import_tasks: tasks/python-setup.yml
-    - import_tasks: tasks/node-setup.yml
-    - import_tasks: tasks/go-setup.yml
-    - import_tasks: tasks/dotfiles.yml
-    - import_tasks: tasks/parallel-clones.yml
-    - import_tasks: tasks/nvim-setup.yml
-    # - import_tasks: tasks/st-setup.yml
-    - import_tasks: tasks/i3blocks-setup.yml
-    # - import_tasks: tasks/eww-setup.yml
-    - import_tasks: tasks/tmux-setup.yml
-    - import_tasks: tasks/gh-setup.yml
-    - import_tasks: tasks/gopass-setup.yml
-    - import_tasks: tasks/brave-setup.yml
-    # - import_tasks: tasks/slack-setup.yml
-    # - import_tasks: tasks/projects-setup.yml
+    - name: Setup productivity tools
+      ansible.builtin.import_tasks: tasks/productivity-tools.yml
+    - name: Setup core build dependencies
+      ansible.builtin.import_tasks: tasks/core-setup.yml
+    - name: Setup kubectl
+      ansible.builtin.import_tasks: tasks/kubectl-setup.yml
+    - name: Setup HashiCorp Vault
+      ansible.builtin.import_tasks: tasks/vault-setup.yml
+    - name: Setup ZSH and shell environment
+      ansible.builtin.import_tasks: tasks/zsh-setup.yml
+    - name: Setup Rust toolchain
+      ansible.builtin.import_tasks: tasks/rust-setup.yml
+    - name: Setup Python with uv
+      ansible.builtin.import_tasks: tasks/python-setup.yml
+    - name: Setup Node.js
+      ansible.builtin.import_tasks: tasks/node-setup.yml
+    - name: Setup Go language
+      ansible.builtin.import_tasks: tasks/go-setup.yml
+    - name: Setup dotfiles
+      ansible.builtin.import_tasks: tasks/dotfiles.yml
+    - name: Clone repositories in parallel
+      ansible.builtin.import_tasks: tasks/parallel-clones.yml
+    - name: Setup Neovim
+      ansible.builtin.import_tasks: tasks/nvim-setup.yml
+    # - name: Setup st terminal
+    #   ansible.builtin.import_tasks: tasks/st-setup.yml
+    - name: Setup i3blocks
+      ansible.builtin.import_tasks: tasks/i3blocks-setup.yml
+    # - name: Setup eww
+    #   ansible.builtin.import_tasks: tasks/eww-setup.yml
+    - name: Setup tmux
+      ansible.builtin.import_tasks: tasks/tmux-setup.yml
+    - name: Setup GitHub CLI
+      ansible.builtin.import_tasks: tasks/gh-setup.yml
+    - name: Setup gopass
+      ansible.builtin.import_tasks: tasks/gopass-setup.yml
+    - name: Setup Brave browser
+      ansible.builtin.import_tasks: tasks/brave-setup.yml
+    # - name: Setup Slack
+    #   ansible.builtin.import_tasks: tasks/slack-setup.yml
+    # - name: Setup projects
+    #   ansible.builtin.import_tasks: tasks/projects-setup.yml
   post_tasks:
     - name: Upgrade Apt
       become: true
-      apt:
+      ansible.builtin.apt:
         force_apt_get: true
         update_cache: true
-        upgrade: yes
+        upgrade: true
         state: present
       tags:
         - install

@@ -26,7 +26,7 @@
 
 - name: Install Build Requirements for st
   become: true
-  package:
+  ansible.builtin.package:
     name:
       - libx11-dev
       - xutils-dev
@@ -44,7 +44,7 @@
 
 - name: Install Build Requirements for eww
   become: true
-  package:
+  ansible.builtin.package:
     name:
       - libglib2.0-dev
       - libcairo2-dev
@@ -60,7 +60,7 @@
 
 - name: Install Build Requirements for tmux
   become: true
-  package:
+  ansible.builtin.package:
     name:
       - libevent-dev
       - libncurses5-dev

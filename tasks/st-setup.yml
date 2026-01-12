@@ -18,7 +18,7 @@
 
 - name: Build st
   become: true
-  shell: make
+  ansible.builtin.shell: make
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/st"
   tags:
@@ -27,7 +27,7 @@
 
 - name: Install st
   become: true
-  shell: make clean install
+  ansible.builtin.shell: make clean install
   args:
     chdir: "{{ lookup('env', 'HOME') }}/.local/src/st"
   tags:
@@ -35,7 +35,7 @@
     - st
 
 - name: Patch libxft
-  import_tasks: tasks/libxft-setup.yml
+  ansible.builtin.import_tasks: tasks/libxft-setup.yml
   tags:
     - install
     - libxft

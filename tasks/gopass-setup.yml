@@ -18,7 +18,7 @@
         state: directory
 
     - name: Add gopass completion
-      shell: "{{ lookup('env', 'HOME') }}/.local/bin/gopass completion zsh > _gopass"
+      ansible.builtin.shell: "{{ lookup('env', 'HOME') }}/.local/bin/gopass completion zsh > _gopass"
       args:
         chdir: "{{ lookup('env', 'HOME') }}/.local/src/oh-my-zsh/plugins/gopass"
   tags:
@@ -33,7 +33,7 @@
         path: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"
         state: directory
 
-    - name: clone into repo
+    - name: Clone into repo
       ansible.builtin.git:
         repo: "https://github.com/joellidin/private-pass.git"
         dest: "{{ lookup('env', 'HOME') }}/.local/share/gopass/stores/root"

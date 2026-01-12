@@ -8,7 +8,7 @@
     - docker
 
 - name: Add Docker GPG Key
-  shell: |
+  ansible.builtin.shell: |
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg |\
     sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
   tags:
@@ -16,7 +16,7 @@
     - docker
 
 - name: Add Docker Repository
-  shell: |
+  ansible.builtin.shell: |
     ARCH=$(dpkg --print-architecture)
     CODENAME=$(lsb_release -cs)
     echo "deb [arch=$ARCH signed-by=/etc/apt/keyrings/docker.gpg] \
@@ -28,7 +28,7 @@
 
 - name: Update apt and install docker packages
   become: true
-  apt:
+  ansible.builtin.apt:
     name: ["docker-ce", "docker-ce-cli", "containerd.io", "docker-compose-plugin"]
     state: latest
     update_cache: true
@@ -38,7 +38,7 @@
 
 - name: Add docker group
   become: true
-  group:
+  ansible.builtin.group:
     name: docker
     state: present
   tags:
@@ -50,4 +50,4 @@
   ansible.builtin.user:
     name: "{{ ansible_user_id }}"
     groups: docker
-    append: yes
+    append: true
