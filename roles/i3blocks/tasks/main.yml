@@ -9,6 +9,8 @@
   tags:
     - install
     - i3blocks
+    - i3blocks-update
+    - update
 
 - name: Clone or update i3blocks repository
   ansible.builtin.git:
@@ -20,6 +22,8 @@
   tags:
     - install
     - i3blocks
+    - i3blocks-update
+    - update
 
 - name: Configure i3blocks
   ansible.builtin.shell: ./autogen.sh && ./configure
@@ -31,6 +35,8 @@
   tags:
     - install
     - i3blocks
+    - i3blocks-update
+    - update
 
 - name: Build i3blocks
   community.general.make:
@@ -40,6 +46,8 @@
   tags:
     - install
     - i3blocks
+    - i3blocks-update
+    - update
 
 - name: Install i3blocks
   become: true
@@ -50,3 +58,5 @@
   tags:
     - install
     - i3blocks
+    - i3blocks-update
+    - update
