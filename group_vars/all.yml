@@ -80,3 +80,11 @@ gopass_download_url: >-
 
 # Go 1.23.4: https://go.dev/dl/
 go_checksum: "sha256:6924efde5de86fe277676e929dc9917d466efa02fb934197bc2eba35d5680971"
+
+# -----------------------------------------------------------------------------
+# Update Behavior
+# -----------------------------------------------------------------------------
+# Control how updates are handled across roles.
+
+# Force rebuild even if version matches (useful for rebuilding from source)
+force_rebuild: false
