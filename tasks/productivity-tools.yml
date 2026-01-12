@@ -37,7 +37,7 @@
       - sqlite3
       - libsqlite3-dev
       - ripgrep
-      - i3-gaps
+      - i3
       - python3-pip
       - git
       - fd-find

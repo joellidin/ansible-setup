@@ -13,11 +13,20 @@
     - install
     - dotfiles
 
+- name: Check if dotfiles already installed
+  ansible.builtin.stat:
+    path: "{{ dotfiles_home }}/.config/zsh/.zshrc"
+  register: dotfiles_zshrc
+  tags:
+    - install
+    - dotfiles
+
 - name: Create backup directory for configs
   ansible.builtin.file:
     path: "{{ dotfiles_backup_dir }}"
     state: directory
     mode: '0755'
+  when: not dotfiles_zshrc.stat.exists
   tags:
     - install
     - dotfiles
@@ -29,6 +38,7 @@
     xargs -I{} mv {{ dotfiles_home }}/$(basename {}) {{ dotfiles_backup_dir }}/
   changed_when: false
   failed_when: false
+  when: not dotfiles_zshrc.stat.exists
   tags:
     - install
     - dotfiles
@@ -37,6 +47,7 @@
   ansible.builtin.find:
     paths: "{{ dotfiles_backup_dir }}"
   register: dotfiles_backup_files
+  when: not dotfiles_zshrc.stat.exists
   tags:
     - install
     - dotfiles
@@ -45,7 +56,9 @@
   ansible.builtin.file:
     path: "{{ dotfiles_backup_dir }}"
     state: absent
-  when: dotfiles_backup_files.matched == 0
+  when:
+    - not dotfiles_zshrc.stat.exists
+    - dotfiles_backup_files.matched == 0
   tags:
     - install
     - dotfiles
@@ -56,6 +69,7 @@
   register: dotfiles_checkout
   changed_when: dotfiles_checkout.rc == 0
   failed_when: false
+  when: not dotfiles_zshrc.stat.exists
   tags:
     - install
     - dotfiles

@@ -19,6 +19,9 @@
     # Skip certain tasks in CI that require external resources
     skip_encrypted_files: true
 
+    # Override role defaults for molecule paths
+    core_fonts_source_dir: "{{ project_root }}/fonts"
+
   environment:
     CARGO_HOME: "{{ ansible_env.HOME }}/.local/share/cargo"
     RUSTUP_HOME: "{{ ansible_env.HOME }}/.local/share/rustup"
@@ -52,10 +55,30 @@
       tags:
         - productivity
 
-    - name: Include core setup
-      ansible.builtin.import_tasks: ../../tasks/core-setup.yml
+    - name: Include core role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/core"
       tags:
         - core
+
+    - name: Include dotfiles role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/dotfiles"
+      tags:
+        - dotfiles
+
+    - name: Include gpg role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/gpg"
+      when: not skip_encrypted_files
+      tags:
+        - gpg
+
+    - name: Include regolith role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/regolith"
+      tags:
+        - regolith
 
     # Test docker role
     - name: Include docker role
