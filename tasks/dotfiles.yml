@@ -23,7 +23,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: |
+  ansible.builtin.shell: |
     /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout 2>&1 |
     egrep '\s+\.' | awk {'print $1'} |
     xargs -I{} mv {{ home }}/$(basename {}) {{ home }}/.config-backup/
@@ -52,7 +52,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout
+  ansible.builtin.shell: /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} checkout
   tags:
     - install
     - dotfiles
@@ -61,7 +61,7 @@
   vars:
     dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
     home: "{{ ansible_env.HOME }}"
-  shell: |
+  ansible.builtin.shell: |
     /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ home }} \
       config --local status.showUntrackedFiles no
   tags:

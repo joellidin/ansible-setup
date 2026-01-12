@@ -22,7 +22,7 @@
     - tmux
 
 - name: Configure and build tmux
-  shell: sh autogen.sh && ./configure && make
+  ansible.builtin.shell: sh autogen.sh && ./configure && make
   args:
     chdir: "{{ local_src | default(ansible_env.HOME + '/.local/src') }}/tmux"
   when: tmux_clone.changed or tmux_installed.rc != 0

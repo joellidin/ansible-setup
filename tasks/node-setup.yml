@@ -10,10 +10,10 @@
 - name: Install Temporary npm Configs
   block:
     - name: Set prefix
-      shell: npm config set prefix "{{ lookup('env', 'HOME') }}/.local/share/npm"
+      ansible.builtin.shell: npm config set prefix "{{ lookup('env', 'HOME') }}/.local/share/npm"
 
     - name: Set cache
-      shell: npm config set cache "{{ lookup('env', 'HOME') }}/.cache/npm"
+      ansible.builtin.shell: npm config set cache "{{ lookup('env', 'HOME') }}/.cache/npm"
   tags:
     - install
     - node
@@ -27,7 +27,7 @@
     - node
 
 - name: Install correct version of Node
-  shell: "{{ lookup('env', 'HOME') }}/.local/share/npm/bin/n 16"
+  ansible.builtin.shell: "{{ lookup('env', 'HOME') }}/.local/share/npm/bin/n 16"
   tags:
     - install
     - node

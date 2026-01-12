@@ -18,7 +18,7 @@
         state: directory
 
     - name: Add gopass completion
-      shell: "{{ lookup('env', 'HOME') }}/.local/bin/gopass completion zsh > _gopass"
+      ansible.builtin.shell: "{{ lookup('env', 'HOME') }}/.local/bin/gopass completion zsh > _gopass"
       args:
         chdir: "{{ lookup('env', 'HOME') }}/.local/src/oh-my-zsh/plugins/gopass"
   tags:

@@ -1,13 +1,13 @@
 ---
 - name: Install uv
-  shell: curl -LsSf https://astral.sh/uv/install.sh | sh
+  ansible.builtin.shell: curl -LsSf https://astral.sh/uv/install.sh | sh
   tags:
     - install
     - python
     - uv
 
 - name: Install python
-  shell: "{{ lookup('env', 'HOME') }}/.local/bin/uv python install"
+  ansible.builtin.shell: "{{ lookup('env', 'HOME') }}/.local/bin/uv python install"
   tags:
     - install
     - python

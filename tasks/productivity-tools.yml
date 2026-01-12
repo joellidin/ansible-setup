@@ -124,14 +124,14 @@
 
 
 - name: Import Yubikey gpg key
-  shell: gpg --import /tmp/pub.key
+  ansible.builtin.shell: gpg --import /tmp/pub.key
   tags:
     - install
     - gpg
     - productivity
 
 - name: Trust key
-  shell: echo "A7A5F7E1CB6C0E868E98445899B478EFF8ED88CD:6:" | gpg --import-ownertrust
+  ansible.builtin.shell: echo "A7A5F7E1CB6C0E868E98445899B478EFF8ED88CD:6:" | gpg --import-ownertrust
   tags:
     - install
     - gpg
