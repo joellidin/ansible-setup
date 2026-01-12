@@ -46,7 +46,7 @@
       become: true
       ansible.builtin.apt:
         update_cache: true
-        cache_valid_time: 0
+        cache_valid_time: 3600
 
   tasks:
     # Test core setup and productivity tools
@@ -87,26 +87,38 @@
       tags:
         - docker
 
-    # Test individual tool setups
-    - name: Include zsh setup
-      ansible.builtin.import_tasks: ../../tasks/zsh-setup.yml
+    # Test desktop and browser roles
+    - name: Include zsh role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/zsh"
       tags:
         - zsh
 
-    - name: Include kubectl setup
-      ansible.builtin.import_tasks: ../../tasks/kubectl-setup.yml
+    - name: Include kubectl role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/kubectl"
       tags:
         - kubectl
 
-    - name: Include vault setup
-      ansible.builtin.import_tasks: ../../tasks/vault-setup.yml
+    - name: Include vault role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/vault"
       tags:
         - vault
 
-    - name: Include brave setup
-      ansible.builtin.import_tasks: ../../tasks/brave-setup.yml
+    - name: Include gopass role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/gopass"
+      vars:
+        gopass_store_repo: ""
       tags:
-        - brave
+        - gopass
+
+    - name: Include browser role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/browser"
+      tags:
+        - browser
 
     # Test language roles
     - name: Include rust role
