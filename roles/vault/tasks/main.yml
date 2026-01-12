@@ -1,0 +1,74 @@
+---
+# Vault role - installs HashiCorp Vault from apt repository
+
+- name: Check if HashiCorp GPG key exists
+  ansible.builtin.stat:
+    path: "{{ vault_keyring_path }}"
+  register: vault_gpg_key
+  tags:
+    - install
+    - vault
+
+- name: Download HashiCorp GPG key
+  ansible.builtin.get_url:
+    url: "{{ vault_gpg_url }}"
+    dest: "{{ ansible_env.XDG_CACHE_HOME | default(ansible_env.HOME + '/.cache') }}/hashicorp.gpg.asc"
+    mode: "0644"
+  when: not vault_gpg_key.stat.exists
+  tags:
+    - install
+    - vault
+
+- name: Dearmor and install HashiCorp GPG key
+  become: true
+  ansible.builtin.shell: >
+    gpg --dearmor
+    < {{ ansible_env.XDG_CACHE_HOME | default(ansible_env.HOME + '/.cache') }}/hashicorp.gpg.asc
+    > {{ vault_keyring_path }}
+  args:
+    creates: "{{ vault_keyring_path }}"
+  when: not vault_gpg_key.stat.exists
+  tags:
+    - install
+    - vault
+
+- name: Set permissions on HashiCorp GPG key
+  become: true
+  ansible.builtin.file:
+    path: "{{ vault_keyring_path }}"
+    mode: "0644"
+  when: not vault_gpg_key.stat.exists
+  tags:
+    - install
+    - vault
+
+- name: Get Ubuntu codename
+  ansible.builtin.command: lsb_release -cs
+  register: vault_ubuntu_codename
+  changed_when: false
+  tags:
+    - install
+    - vault
+
+- name: Add HashiCorp apt repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by={{ vault_keyring_path }}]
+      {{ vault_repo_url }} {{ vault_ubuntu_codename.stdout }} main
+    filename: hashicorp
+    state: present
+  tags:
+    - install
+    - vault
+
+- name: Install Vault
+  become: true
+  ansible.builtin.apt:
+    name: vault
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - install
+    - vault

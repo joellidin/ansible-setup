@@ -1,0 +1,11 @@
+---
+# Vault role defaults
+
+# GPG key path
+vault_keyring_path: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+# HashiCorp GPG key URL
+vault_gpg_url: https://apt.releases.hashicorp.com/gpg
+
+# HashiCorp apt repository base URL
+vault_repo_url: https://apt.releases.hashicorp.com
