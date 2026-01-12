@@ -1,6 +1,6 @@
 ---
 - name: Download Slack
-  get_url:
+  ansible.builtin.get_url:
     url: https://downloads.slack-edge.com/releases/linux/4.25.0/prod/x64/slack-desktop-4.25.0-amd64.deb
     dest: /tmp/slack.deb
   tags:

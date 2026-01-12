@@ -29,7 +29,7 @@
   vars:
     go_ver: "{{ go_version | default('1.23.4') }}"
     default_url: "https://go.dev/dl/go{{ go_ver }}.linux-amd64.tar.gz"
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ go_download_url | default(default_url) }}"
     dest: "/tmp/go{{ go_ver }}.linux-amd64.tar.gz"
     checksum: "{{ go_checksum | default(omit) }}"
