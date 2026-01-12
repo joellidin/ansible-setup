@@ -1,0 +1,70 @@
+---
+# Gopass role - installs gopass password manager
+
+- name: Check if gopass is installed
+  ansible.builtin.command: "{{ gopass_bin_dir }}/gopass --version"
+  register: gopass_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - gopass
+
+- name: Download and extract gopass binary
+  ansible.builtin.unarchive:
+    src: "{{ gopass_download_url }}"
+    dest: "{{ gopass_bin_dir }}"
+    remote_src: true
+    include:
+      - gopass
+  when: gopass_check.rc != 0 or gopass_version not in gopass_check.stdout
+  tags:
+    - install
+    - gopass
+
+- name: Create gopass directory in Oh-My-Zsh
+  ansible.builtin.file:
+    path: "{{ gopass_omz_path }}/plugins/gopass"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - gopass
+
+- name: Check if gopass completion exists
+  ansible.builtin.stat:
+    path: "{{ gopass_omz_path }}/plugins/gopass/_gopass"
+  register: gopass_completion_stat
+  tags:
+    - install
+    - gopass
+
+- name: Generate gopass completion
+  ansible.builtin.shell: >
+    {{ gopass_bin_dir }}/gopass completion zsh
+    > {{ gopass_omz_path }}/plugins/gopass/_gopass
+  when: not gopass_completion_stat.stat.exists
+  changed_when: true
+  tags:
+    - install
+    - gopass
+
+- name: Create gopass store directory
+  ansible.builtin.file:
+    path: "{{ gopass_store_path }}"
+    state: directory
+    mode: "0700"
+  when: gopass_store_repo | length > 0
+  tags:
+    - install
+    - gopass
+
+- name: Clone password store repository
+  ansible.builtin.git:
+    repo: "{{ gopass_store_repo }}"
+    dest: "{{ gopass_store_path }}"
+    update: true
+  when: gopass_store_repo | length > 0
+  tags:
+    - install
+    - gopass
