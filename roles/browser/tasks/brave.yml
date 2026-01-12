@@ -1,0 +1,32 @@
+---
+# Brave browser installation
+
+- name: Check if Brave GPG key exists
+  ansible.builtin.stat:
+    path: "{{ browser_brave_keyring }}"
+  register: browser_brave_gpg_key
+
+- name: Download Brave GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ browser_brave_gpg_url }}"
+    dest: "{{ browser_brave_keyring }}"
+    mode: "0644"
+  when: not browser_brave_gpg_key.stat.exists
+
+- name: Add Brave apt repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by={{ browser_brave_keyring }} arch=amd64]
+      {{ browser_brave_repo_url }} stable main
+    filename: brave-browser-release
+    state: present
+
+- name: Install Brave browser
+  become: true
+  ansible.builtin.apt:
+    name: brave-browser
+    state: present
+    update_cache: true
+    cache_valid_time: 3600

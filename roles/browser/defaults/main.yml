@@ -1,0 +1,10 @@
+---
+# Browser role defaults
+
+# Browser choice: brave, zen, none
+browser_choice: "brave"
+
+# Brave browser settings
+browser_brave_keyring: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+browser_brave_gpg_url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+browser_brave_repo_url: https://brave-browser-apt-release.s3.brave.com/
