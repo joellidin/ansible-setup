@@ -25,7 +25,7 @@
 
 - name: Symlink to /usr/bin
   become: true
-  file:
+  ansible.builtin.file:
     src: "{{ lookup('env', 'HOME') }}/.local/src/eww/target/release/eww"
     dest: /usr/bin/eww
     state: link

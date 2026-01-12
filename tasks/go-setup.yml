@@ -40,7 +40,7 @@
     - go
 
 - name: Remove old Go installation
-  file:
+  ansible.builtin.file:
     path: "{{ go_install_path | default('/usr/local/go') }}"
     state: absent
   become: true
@@ -61,7 +61,7 @@
     - go
 
 - name: Clean up Go tarball
-  file:
+  ansible.builtin.file:
     path: "/tmp/go{{ go_version | default('1.23.4') }}.linux-amd64.tar.gz"
     state: absent
   when: go_needs_install
