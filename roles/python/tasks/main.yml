@@ -1,0 +1,28 @@
+---
+# Python role - installs Python via uv package manager
+
+- name: Check if uv is installed
+  ansible.builtin.stat:
+    path: "{{ python_uv_bin }}"
+  register: python_uv_check
+  tags:
+    - install
+    - python
+    - uv
+
+- name: Install uv
+  ansible.builtin.shell: curl -LsSf https://astral.sh/uv/install.sh | sh
+  when: not python_uv_check.stat.exists
+  changed_when: true
+  tags:
+    - install
+    - python
+    - uv
+
+- name: Install Python {{ python_version }}
+  ansible.builtin.command: "{{ python_uv_bin }} python install {{ python_version }}"
+  register: python_install_result
+  changed_when: "'Installed' in python_install_result.stderr"
+  tags:
+    - install
+    - python
