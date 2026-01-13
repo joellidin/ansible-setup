@@ -1,0 +1,85 @@
+---
+# Zig role - installs Zig programming language
+
+- name: Check current Zig version
+  ansible.builtin.command: "{{ zig_bin }} version"
+  register: zig_version_check
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Determine if Zig installation needed
+  ansible.builtin.set_fact:
+    zig_needs_install: >-
+      {{ force_rebuild | default(false) or
+         zig_version_check.rc != 0 or
+         zig_version not in zig_version_check.stdout }}
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Download Zig tarball
+  ansible.builtin.get_url:
+    url: "{{ zig_download_url }}"
+    dest: "/tmp/zig-{{ zig_version }}.tar.xz"
+    mode: "0644"
+  when: zig_needs_install
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Remove old Zig installation
+  ansible.builtin.file:
+    path: "{{ zig_install_dir }}"
+    state: absent
+  when: zig_needs_install
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Create Zig installation directory
+  ansible.builtin.file:
+    path: "{{ zig_install_dir }}"
+    state: directory
+    mode: "0755"
+  when: zig_needs_install
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Extract Zig tarball
+  ansible.builtin.unarchive:
+    src: "/tmp/zig-{{ zig_version }}.tar.xz"
+    dest: "{{ zig_install_dir }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  when: zig_needs_install
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
+
+- name: Clean up Zig tarball
+  ansible.builtin.file:
+    path: "/tmp/zig-{{ zig_version }}.tar.xz"
+    state: absent
+  when: zig_needs_install
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
