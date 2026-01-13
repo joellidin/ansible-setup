@@ -97,19 +97,18 @@
         fail_msg: "Vault is not installed"
         success_msg: "Vault is installed at {{ vault_check.stdout }}"
 
-    # Verify Brave
-    - name: Check brave-browser is installed
-      ansible.builtin.command: which brave-browser
-      register: brave_check
-      changed_when: false
-      failed_when: false
+    # Verify Zen browser
+    - name: Check zen browser is installed
+      ansible.builtin.stat:
+        path: "{{ ansible_env.HOME }}/.local/bin/zen"
+      register: zen_check
 
-    - name: Verify brave installation
+    - name: Verify zen installation
       ansible.builtin.assert:
         that:
-          - brave_check.rc == 0
-        fail_msg: "Brave browser is not installed"
-        success_msg: "Brave browser is installed at {{ brave_check.stdout }}"
+          - zen_check.stat.exists
+        fail_msg: "Zen browser is not installed"
+        success_msg: "Zen browser is installed"
 
     # Verify GitHub CLI (skipped in test - requires encrypted files)
     - name: Check gh is installed
@@ -145,5 +144,5 @@
           - Docker: {{ 'OK' if docker_check.rc == 0 else 'FAILED' }}
           - kubectl: {{ 'OK' if kubectl_check.rc == 0 else 'FAILED' }}
           - Vault: {{ 'OK' if vault_check.rc == 0 else 'FAILED' }}
-          - Brave: {{ 'OK' if brave_check.rc == 0 else 'FAILED' }}
+          - Zen: {{ 'OK' if zen_check.stat.exists else 'FAILED' }}
           - GitHub CLI: SKIPPED (requires encrypted files)
