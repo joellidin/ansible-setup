@@ -121,6 +121,8 @@
         name: "{{ project_root }}/roles/browser"
       tags:
         - browser
+        - zen-update
+        - update
 
     # Test language roles
     - name: Include rust role
@@ -155,6 +157,14 @@
         - node-update
         - update
 
+    - name: Include zig role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/zig"
+      tags:
+        - zig
+        - zig-update
+        - update
+
     # Test dev tool roles
     - name: Include neovim role
       ansible.builtin.include_role:
@@ -185,4 +195,20 @@
       tags:
         - i3blocks
         - i3blocks-update
+        - update
+
+    - name: Include ghostty role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/ghostty"
+      tags:
+        - ghostty
+        - ghostty-update
+        - update
+
+    - name: Include claude_code role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/claude_code"
+      tags:
+        - claude-code
+        - claude-code-update
         - update
