@@ -1,0 +1,79 @@
+---
+# Ghostty role - installs Ghostty terminal via deb package
+
+- name: Check if Ghostty is installed
+  ansible.builtin.command: ghostty --version
+  register: ghostty_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
+
+- name: Get latest Ghostty release info
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/{{ ghostty_ubuntu_repo }}/releases/latest"
+    return_content: true
+  register: ghostty_release
+  when: ghostty_installed.rc != 0
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
+
+- name: Set Ghostty deb URL
+  ansible.builtin.set_fact:
+    ghostty_deb_url: >-
+      {{ ghostty_release.json.assets
+         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ ansible_distribution_version ~ '\.deb$')
+         | map(attribute='browser_download_url')
+         | first }}
+    ghostty_deb_name: >-
+      {{ ghostty_release.json.assets
+         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ ansible_distribution_version ~ '\.deb$')
+         | map(attribute='name')
+         | first }}
+  when: ghostty_installed.rc != 0
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
+
+- name: Download Ghostty deb package
+  ansible.builtin.get_url:
+    url: "{{ ghostty_deb_url }}"
+    dest: "{{ ghostty_download_dir }}/{{ ghostty_deb_name }}"
+    mode: "0644"
+  when: ghostty_installed.rc != 0
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
+
+- name: Install Ghostty deb package
+  become: true
+  ansible.builtin.apt:
+    deb: "{{ ghostty_download_dir }}/{{ ghostty_deb_name }}"
+    state: present
+  when: ghostty_installed.rc != 0
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
+
+- name: Clean up Ghostty deb package
+  ansible.builtin.file:
+    path: "{{ ghostty_download_dir }}/{{ ghostty_deb_name }}"
+    state: absent
+  when: ghostty_installed.rc != 0
+  tags:
+    - install
+    - ghostty
+    - ghostty-update
+    - update
