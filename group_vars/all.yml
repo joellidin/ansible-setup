@@ -82,6 +82,14 @@ gopass_download_url: >-
 go_checksum: "sha256:6924efde5de86fe277676e929dc9917d466efa02fb934197bc2eba35d5680971"
 
 # -----------------------------------------------------------------------------
+# Application Choices
+# -----------------------------------------------------------------------------
+# Configure which applications to install when alternatives exist.
+
+# Browser: brave, zen, none
+browser_choice: "zen"
+
+# -----------------------------------------------------------------------------
 # Update Behavior
 # -----------------------------------------------------------------------------
 # Control how updates are handled across roles.

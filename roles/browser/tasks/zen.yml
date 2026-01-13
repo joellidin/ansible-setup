@@ -1,0 +1,76 @@
+---
+# Zen browser installation from tarball
+
+- name: Check if Zen browser is installed
+  ansible.builtin.stat:
+    path: "{{ browser_zen_install_dir }}/zen"
+  register: browser_zen_installed
+
+- name: Check Zen browser version
+  ansible.builtin.command: "{{ browser_zen_install_dir }}/zen --version"
+  register: browser_zen_version_check
+  changed_when: false
+  failed_when: false
+  when: browser_zen_installed.stat.exists
+
+- name: Download Zen browser tarball
+  ansible.builtin.get_url:
+    url: "{{ browser_zen_download_url }}"
+    dest: "/tmp/zen.linux-x86_64.tar.xz"
+    checksum: "sha256:{{ browser_zen_checksum }}"
+    mode: "0644"
+  when: >
+    not browser_zen_installed.stat.exists or
+    browser_zen_version not in (browser_zen_version_check.stdout | default(''))
+  register: browser_zen_downloaded
+
+- name: Create Zen browser directory
+  ansible.builtin.file:
+    path: "{{ browser_zen_install_dir }}"
+    state: directory
+    mode: "0755"
+  when: browser_zen_downloaded.changed
+
+- name: Extract Zen browser tarball
+  ansible.builtin.unarchive:
+    src: "/tmp/zen.linux-x86_64.tar.xz"
+    dest: "{{ browser_zen_install_dir }}"
+    remote_src: true
+    extra_opts:
+      - --strip-components=1
+  when: browser_zen_downloaded.changed
+
+- name: Create Zen browser symlink
+  ansible.builtin.file:
+    src: "{{ browser_zen_install_dir }}/zen"
+    dest: "{{ local_bin }}/zen"
+    state: link
+
+- name: Create applications directory
+  ansible.builtin.file:
+    path: "{{ local_share }}/applications"
+    state: directory
+    mode: "0755"
+
+- name: Create Zen browser desktop entry
+  ansible.builtin.copy:
+    dest: "{{ local_share }}/applications/zen-browser.desktop"
+    mode: "0644"
+    content: |
+      [Desktop Entry]
+      Name=Zen Browser
+      Comment=Experience tranquillity while browsing the web
+      Exec={{ browser_zen_install_dir }}/zen %u
+      Icon={{ browser_zen_install_dir }}/browser/chrome/icons/default/default128.png
+      Terminal=false
+      Type=Application
+      Categories=Network;WebBrowser;
+      MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;
+      StartupNotify=true
+      StartupWMClass=zen
+
+- name: Clean up Zen browser tarball
+  ansible.builtin.file:
+    path: "/tmp/zen.linux-x86_64.tar.xz"
+    state: absent
+  when: browser_zen_downloaded.changed
