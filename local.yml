@@ -67,6 +67,12 @@
         - node
         - node-update
         - update
+    - role: zig
+      tags:
+        - install
+        - zig
+        - zig-update
+        - update
     - role: neovim
       tags:
         - install
@@ -116,6 +122,20 @@
       tags:
         - install
         - browser
+        - zen-update
+        - update
+    - role: ghostty
+      tags:
+        - install
+        - ghostty
+        - ghostty-update
+        - update
+    - role: claude_code
+      tags:
+        - install
+        - claude-code
+        - claude-code-update
+        - update
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml
