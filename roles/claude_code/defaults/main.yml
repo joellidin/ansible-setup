@@ -1,0 +1,11 @@
+---
+# Claude Code role defaults
+
+# Install script URL
+claude_code_install_url: "https://claude.ai/install.sh"
+
+# Binary location (installed by official script to ~/.local/bin)
+claude_code_bin: "{{ local_bin }}/claude"
+
+# Cache directory for installer
+claude_code_cache_dir: "{{ cache_home }}/claude-code"
