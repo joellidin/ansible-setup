@@ -9,6 +9,8 @@
   tags:
     - install
     - gopass
+    - gopass-update
+    - update
 
 - name: Download and extract gopass binary
   ansible.builtin.unarchive:
@@ -21,6 +23,8 @@
   tags:
     - install
     - gopass
+    - gopass-update
+    - update
 
 - name: Create gopass directory in Oh-My-Zsh
   ansible.builtin.file:

@@ -9,11 +9,15 @@
   tags:
     - install
     - neovim
+    - neovim-update
+    - update
 
 - name: Build and install Neovim from source
   tags:
     - install
     - neovim
+    - neovim-update
+    - update
   block:
     - name: Clone or update Neovim repository
       ansible.builtin.git:

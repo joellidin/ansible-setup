@@ -9,6 +9,8 @@
   tags:
     - install
     - tmux
+    - tmux-update
+    - update
 
 - name: Clone or update tmux repository
   ansible.builtin.git:
@@ -21,6 +23,8 @@
   tags:
     - install
     - tmux
+    - tmux-update
+    - update
 
 - name: Configure and build tmux
   ansible.builtin.shell: sh autogen.sh && ./configure && make
@@ -32,6 +36,8 @@
   tags:
     - install
     - tmux
+    - tmux-update
+    - update
 
 - name: Install tmux
   become: true
@@ -42,3 +48,5 @@
   tags:
     - install
     - tmux
+    - tmux-update
+    - update

@@ -21,11 +21,14 @@
 - name: Determine if Go installation needed
   ansible.builtin.set_fact:
     go_needs_install: >-
-      {{ go_version_check.rc != 0 or
-         (go_installed_version | default('0')) is version(go_version, '<') }}
+      {{ force_rebuild | default(false) or
+         go_version_check.rc != 0 or
+         (go_installed_version | default('0')) != go_version }}
   tags:
     - install
     - go
+    - go-update
+    - update
 
 - name: Download Go tarball
   ansible.builtin.get_url:
@@ -37,6 +40,8 @@
   tags:
     - install
     - go
+    - go-update
+    - update
 
 - name: Remove old Go installation
   become: true
@@ -47,6 +52,8 @@
   tags:
     - install
     - go
+    - go-update
+    - update
 
 - name: Extract Go tarball
   become: true
@@ -58,6 +65,8 @@
   tags:
     - install
     - go
+    - go-update
+    - update
 
 - name: Clean up Go tarball
   ansible.builtin.file:
@@ -67,3 +76,5 @@
   tags:
     - install
     - go
+    - go-update
+    - update
