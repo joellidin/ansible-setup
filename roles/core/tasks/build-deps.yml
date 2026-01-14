@@ -1,6 +1,17 @@
 ---
 # Build dependencies installation tasks
 
+- name: Install core utilities
+  become: true
+  ansible.builtin.apt:
+    name: "{{ core_utilities }}"
+    state: present
+    update_cache: true
+    cache_valid_time: "{{ core_apt_cache_valid_time }}"
+  tags:
+    - install
+    - core
+
 - name: Install build requirements for Neovim
   become: true
   ansible.builtin.apt:

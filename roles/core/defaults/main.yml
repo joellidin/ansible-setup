@@ -1,6 +1,11 @@
 ---
 # Core role defaults
 
+# Core utilities needed by other roles
+core_utilities:
+  - wget
+  - curl
+
 # Path variables
 core_local_share: "{{ ansible_env.HOME }}/.local/share"
 core_fonts_dir: "{{ core_local_share }}/fonts"
