@@ -1,0 +1,24 @@
+---
+profile: production
+
+# Exclude paths from linting
+exclude_paths:
+  - .cache/
+  - .git/
+  - hosts.yml  # Encrypted vault file
+  - encrypt-data/
+
+# Skip rules that don't apply to this project
+skip_list:
+  # Molecule converge.yml uses paths for roles (required for testing)
+  - role-name[path]
+  # Some shell commands have no module equivalent
+  - command-instead-of-module
+  - command-instead-of-shell
+  # Shell pipes are intentional in some cases
+  - risky-shell-pipe
+
+# Warn instead of fail for these
+warn_list:
+  - no-handler
+  - latest

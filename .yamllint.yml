@@ -9,6 +9,7 @@ rules:
     allowed-values: ['true', 'false', 'yes', 'no']
   comments:
     min-spaces-from-content: 1
+  comments-indentation: false
   braces:
     min-spaces-inside: 0
     max-spaces-inside: 1
@@ -18,6 +19,9 @@ rules:
   indentation:
     spaces: 2
     indent-sequences: consistent
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
 
 ignore: |
   .github/
