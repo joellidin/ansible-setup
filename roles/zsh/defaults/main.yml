@@ -10,3 +10,6 @@ zsh_state_dir: "{{ ansible_env.HOME }}/.local/state/zsh"
 # Starship installer path (avoid /tmp noexec issues)
 zsh_starship_installer: >-
   {{ ansible_env.XDG_CACHE_HOME | default(ansible_env.HOME + '/.cache') }}/starship-install.sh
+
+# Starship binary directory
+zsh_starship_bin_dir: "{{ ansible_env.HOME }}/.local/bin"
