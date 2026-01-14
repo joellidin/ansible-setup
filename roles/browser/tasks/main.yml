@@ -8,3 +8,13 @@
     - install
     - browser
     - brave
+
+- name: Install Zen browser
+  ansible.builtin.include_tasks: zen.yml
+  when: browser_choice == "zen"
+  tags:
+    - install
+    - browser
+    - zen
+    - zen-update
+    - update

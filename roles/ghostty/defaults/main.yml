@@ -1,0 +1,11 @@
+---
+# Ghostty role defaults
+
+# GitHub repo for Ubuntu deb packages
+ghostty_ubuntu_repo: "mkasberg/ghostty-ubuntu"
+
+# Architecture mapping
+ghostty_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+
+# Download directory
+ghostty_download_dir: "{{ cache_home }}"
