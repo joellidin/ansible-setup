@@ -24,7 +24,8 @@
   become: true
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/regolith.list
-    content: "deb [arch=amd64 signed-by={{ regolith_keyring_path }}] {{ regolith_repo_url }} {{ regolith_ubuntu_codename }} main\n"
+    content: |
+      deb [arch=amd64 signed-by={{ regolith_keyring_path }}] {{ regolith_repo_url }} {{ regolith_ubuntu_codename }} main
     mode: '0644'
   tags:
     - install

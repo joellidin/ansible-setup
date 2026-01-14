@@ -46,7 +46,7 @@
     - node-update
     - update
 
-- name: Install Node.js {{ node_version }} via n
+- name: Install Node.js via n (version {{ node_version }})
   ansible.builtin.command: "{{ node_n_bin }} {{ node_version }}"
   environment:
     N_PREFIX: "{{ node_n_prefix }}"
@@ -58,4 +58,3 @@
     - node
     - node-update
     - update
-

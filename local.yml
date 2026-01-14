@@ -141,14 +141,6 @@
       ansible.builtin.import_tasks: tasks/productivity-tools.yml
     - name: Clone repositories in parallel
       ansible.builtin.import_tasks: tasks/parallel-clones.yml
-    # - name: Setup st terminal
-    #   ansible.builtin.import_tasks: tasks/st-setup.yml
-    # - name: Setup eww
-    #   ansible.builtin.import_tasks: tasks/eww-setup.yml
-    # - name: Setup Slack
-    #   ansible.builtin.import_tasks: tasks/slack-setup.yml
-    # - name: Setup projects
-    #   ansible.builtin.import_tasks: tasks/projects-setup.yml
   post_tasks:
     - name: Upgrade Apt
       become: true

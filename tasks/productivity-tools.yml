@@ -68,6 +68,7 @@
     chdir: /tmp
   become: true
   when: delta_installed.rc != 0
+  changed_when: true
   tags:
     - install
     - productivity
