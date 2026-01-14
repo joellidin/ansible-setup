@@ -83,3 +83,14 @@
     - zig
     - zig-update
     - update
+
+- name: Symlink zig binary to local bin
+  ansible.builtin.file:
+    src: "{{ zig_bin }}"
+    dest: "{{ local_bin }}/zig"
+    state: link
+  tags:
+    - install
+    - zig
+    - zig-update
+    - update
