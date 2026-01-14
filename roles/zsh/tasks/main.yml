@@ -38,6 +38,14 @@
     - install
     - zsh
 
+- name: Remove default .zshrc created by Oh-My-Zsh
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.zshrc"
+    state: absent
+  tags:
+    - install
+    - zsh
+
 - name: Install zsh-autosuggestions
   ansible.builtin.git:
     repo: https://github.com/zsh-users/zsh-autosuggestions.git
@@ -75,6 +83,17 @@
     - zsh
     - starship
 
+- name: Ensure Starship bin directory exists
+  ansible.builtin.file:
+    path: "{{ zsh_starship_bin_dir }}"
+    state: directory
+    mode: "0755"
+  when: zsh_starship_check.rc != 0
+  tags:
+    - install
+    - zsh
+    - starship
+
 - name: Download Starship installer
   ansible.builtin.get_url:
     url: https://starship.rs/install.sh
@@ -87,7 +106,7 @@
     - starship
 
 - name: Install Starship
-  ansible.builtin.command: "{{ zsh_starship_installer }} -y"
+  ansible.builtin.command: "{{ zsh_starship_installer }} -y -b {{ zsh_starship_bin_dir }}"
   when: zsh_starship_check.rc != 0
   changed_when: true
   tags:
