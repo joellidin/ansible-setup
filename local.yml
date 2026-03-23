@@ -134,6 +134,12 @@
         - ghostty
         - ghostty-update
         - update
+    - role: picom
+      tags:
+        - install
+        - picom
+        - picom-update
+        - update
     - role: claude_code
       tags:
         - install

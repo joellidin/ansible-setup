@@ -1,0 +1,98 @@
+---
+# picom role - builds and installs picom compositor from source
+
+- name: Install picom build dependencies
+  become: true
+  ansible.builtin.apt:
+    name: "{{ picom_build_deps }}"
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Remove xcompmgr (replaced by picom)
+  become: true
+  ansible.builtin.apt:
+    name: xcompmgr
+    state: absent
+  tags:
+    - install
+    - picom
+
+- name: Check if picom is installed
+  ansible.builtin.command: "{{ picom_prefix }}/bin/picom --version"
+  register: picom_installed
+  changed_when: false
+  failed_when: false
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Clone or update picom repository
+  ansible.builtin.git:
+    repo: "{{ picom_repo }}"
+    dest: "{{ picom_src_dir }}"
+    version: "{{ picom_version }}"
+    update: true
+    force: false
+  register: picom_clone
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Initialize picom submodules
+  ansible.builtin.command: git submodule update --init --recursive
+  args:
+    chdir: "{{ picom_src_dir }}"
+  when: picom_clone.changed or picom_installed.rc != 0
+  register: picom_submodules
+  changed_when: picom_submodules.rc == 0
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Configure picom build
+  ansible.builtin.command: meson setup --buildtype=release --prefix={{ picom_prefix }} build
+  args:
+    chdir: "{{ picom_src_dir }}"
+  when: picom_clone.changed or picom_installed.rc != 0
+  register: picom_configure
+  changed_when: picom_configure.rc == 0
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Build picom
+  ansible.builtin.command: ninja -C build
+  args:
+    chdir: "{{ picom_src_dir }}"
+  when: picom_configure.changed | default(false)
+  register: picom_build
+  changed_when: picom_build.rc == 0
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update
+
+- name: Install picom
+  ansible.builtin.command: ninja -C build install
+  args:
+    chdir: "{{ picom_src_dir }}"
+  when: picom_build.changed | default(false)
+  tags:
+    - install
+    - picom
+    - picom-update
+    - update

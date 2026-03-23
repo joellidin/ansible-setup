@@ -1,0 +1,38 @@
+---
+# picom role defaults
+
+# Repository
+picom_repo: https://github.com/yshui/picom.git
+picom_version: v13
+
+# Installation paths
+picom_src_dir: "{{ ansible_env.HOME }}/.local/src/picom"
+picom_prefix: "{{ ansible_env.HOME }}/.local"
+
+# Build dependencies
+picom_build_deps:
+  - cmake
+  - libconfig-dev
+  - libdbus-1-dev
+  - libegl-dev
+  - libev-dev
+  - libgl-dev
+  - libepoxy-dev
+  - libpcre2-dev
+  - libpixman-1-dev
+  - libx11-xcb-dev
+  - libxcb1-dev
+  - libxcb-composite0-dev
+  - libxcb-damage0-dev
+  - libxcb-glx0-dev
+  - libxcb-image0-dev
+  - libxcb-present-dev
+  - libxcb-randr0-dev
+  - libxcb-render0-dev
+  - libxcb-render-util0-dev
+  - libxcb-shape0-dev
+  - libxcb-util-dev
+  - libxcb-xfixes0-dev
+  - meson
+  - ninja-build
+  - uthash-dev
