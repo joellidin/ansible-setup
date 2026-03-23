@@ -24,7 +24,7 @@
       - rofi
       - acpi
       - unclutter
-      - xcompmgr
+
       - sqlite3
       - libsqlite3-dev
       - ripgrep
