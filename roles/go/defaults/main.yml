@@ -2,7 +2,7 @@
 # Go role defaults
 
 # Go version to install
-go_version: "1.23.4"
+go_version: "1.26.0"
 
 # Installation path
 go_install_path: /usr/local/go

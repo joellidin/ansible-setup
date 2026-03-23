@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 # Keeping versions centralized makes upgrades straightforward and auditable.
 
-go_version: "1.23.4"
+go_version: "1.26.0"
 kubectl_version: "v1.31"
 gopass_version: "1.16.1"
 node_version: "20"
@@ -78,8 +78,8 @@ gopass_download_url: >-
 # Verify downloads to prevent tampering. Update these when changing versions.
 # Get checksums from official release pages.
 
-# Go 1.23.4: https://go.dev/dl/
-go_checksum: "sha256:6924efde5de86fe277676e929dc9917d466efa02fb934197bc2eba35d5680971"
+# Go 1.26.0: https://go.dev/dl/
+go_checksum: "sha256:aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235"
 
 # -----------------------------------------------------------------------------
 # Application Choices
