@@ -18,6 +18,10 @@
         - install
         - core
   environment:
+    XDG_CONFIG_HOME: "{{ ansible_env.HOME }}/.config"
+    XDG_DATA_HOME: "{{ ansible_env.HOME }}/.local/share"
+    XDG_CACHE_HOME: "{{ ansible_env.HOME }}/.cache"
+    XDG_STATE_HOME: "{{ ansible_env.HOME }}/.local/state"
     CARGO_HOME: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}"
     RUSTUP_HOME: "{{ rustup_home | default(ansible_env.HOME + '/.local/share/rustup') }}"
     N_PREFIX: "{{ n_prefix | default(ansible_env.HOME + '/.local/share/n') }}"

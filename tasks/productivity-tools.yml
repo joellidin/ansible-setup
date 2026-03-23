@@ -1,12 +1,4 @@
 ---
-- name: Install wget
-  become: true
-  ansible.builtin.package:
-    name: wget
-  tags:
-    - install
-    - productivity
-
 - name: Add git-core PPA
   become: true
   ansible.builtin.apt_repository:
@@ -20,7 +12,6 @@
   become: true
   ansible.builtin.apt:
     name:
-      - curl
       - xcape
       - xdotool
       - ffmpeg

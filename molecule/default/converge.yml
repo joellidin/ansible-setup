@@ -23,6 +23,10 @@
     core_fonts_source_dir: "{{ project_root }}/fonts"
 
   environment:
+    XDG_CONFIG_HOME: "{{ ansible_env.HOME }}/.config"
+    XDG_DATA_HOME: "{{ ansible_env.HOME }}/.local/share"
+    XDG_CACHE_HOME: "{{ ansible_env.HOME }}/.cache"
+    XDG_STATE_HOME: "{{ ansible_env.HOME }}/.local/state"
     CARGO_HOME: "{{ ansible_env.HOME }}/.local/share/cargo"
     RUSTUP_HOME: "{{ ansible_env.HOME }}/.local/share/rustup"
     N_PREFIX: "{{ ansible_env.HOME }}/.local/share/n"

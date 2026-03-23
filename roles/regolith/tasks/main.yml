@@ -1,21 +1,15 @@
 ---
 # Regolith role - sets up Regolith Linux desktop environment repository
 
-- name: Check if Regolith keyring exists
-  ansible.builtin.stat:
-    path: "{{ regolith_keyring_path }}"
-  register: regolith_keyring
-  tags:
-    - install
-    - regolith
-
-- name: Download Regolith GPG key
+- name: Install Regolith GPG key
   become: true
   ansible.builtin.shell: |
+    set -o pipefail
     wget -qO - {{ regolith_key_url }} | \
-    gpg --dearmor | tee {{ regolith_keyring_path }} > /dev/null
-  when: not regolith_keyring.stat.exists
-  changed_when: true
+    gpg --dearmor > {{ regolith_keyring_path }}
+  args:
+    executable: /bin/bash
+    creates: "{{ regolith_keyring_path }}"
   tags:
     - install
     - regolith
@@ -25,7 +19,7 @@
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/regolith.list
     content: |
-      deb [arch=amd64 signed-by={{ regolith_keyring_path }}] {{ regolith_repo_url }} {{ regolith_ubuntu_codename }} main
+      deb [arch=amd64 signed-by={{ regolith_keyring_path }}] {{ regolith_repo_url }} {{ regolith_ubuntu_codename }} {{ regolith_version }}
     mode: '0644'
   tags:
     - install
