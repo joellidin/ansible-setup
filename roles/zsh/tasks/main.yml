@@ -74,7 +74,7 @@
     - zsh
 
 - name: Check if Starship is installed
-  ansible.builtin.command: starship --version
+  ansible.builtin.command: "{{ zsh_starship_bin_dir }}/starship --version"
   register: zsh_starship_check
   changed_when: false
   failed_when: false
