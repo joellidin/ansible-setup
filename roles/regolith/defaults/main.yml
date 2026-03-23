@@ -5,10 +5,13 @@
 regolith_keyring_path: /usr/share/keyrings/regolith-archive-keyring.gpg
 
 # Regolith key URL
-regolith_key_url: https://regolith-desktop.org/regolith.key
+regolith_key_url: https://archive.regolith-desktop.com/regolith.key
 
-# Repository URL (adjust for your Ubuntu version)
-regolith_repo_url: https://regolith-desktop.org/release-ubuntu-jammy-amd64
+# Repository URL
+regolith_repo_url: https://archive.regolith-desktop.com/ubuntu/stable
 
 # Ubuntu codename
-regolith_ubuntu_codename: jammy
+regolith_ubuntu_codename: noble
+
+# Regolith version component
+regolith_version: v3.4
