@@ -1,0 +1,28 @@
+---
+# Herdr role - installs the herdr agent runtime (static binary from GitHub releases)
+
+- name: Check if herdr is installed
+  ansible.builtin.command: "{{ herdr_bin_dir }}/herdr --version"
+  register: herdr_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - herdr
+    - herdr-update
+    - update
+
+- name: Download herdr binary
+  ansible.builtin.get_url:
+    url: "{{ herdr_download_url }}"
+    dest: "{{ herdr_bin_dir }}/herdr"
+    checksum: "{{ herdr_checksums[herdr_arch] }}"
+    mode: "0755"
+    force: true
+  when: herdr_check.rc != 0 or herdr_version not in herdr_check.stdout
+  tags:
+    - install
+    - herdr
+    - herdr-update
+    - update

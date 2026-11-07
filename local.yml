@@ -146,6 +146,12 @@
         - claude-code
         - claude-code-update
         - update
+    - role: herdr
+      tags:
+        - install
+        - herdr
+        - herdr-update
+        - update
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml

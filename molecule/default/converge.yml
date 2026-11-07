@@ -216,3 +216,11 @@
         - claude-code
         - claude-code-update
         - update
+
+    - name: Include herdr role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/herdr"
+      tags:
+        - herdr
+        - herdr-update
+        - update

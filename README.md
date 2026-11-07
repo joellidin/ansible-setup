@@ -4,7 +4,7 @@ Ansible playbook for bootstrapping a complete development environment on Ubuntu.
 
 ## Features
 
-- **21 modular roles** for installing and configuring development tools
+- **22 modular roles** for installing and configuring development tools
 - **Update mechanism** with `--tags update` to keep tools current
 - **XDG Base Directory** compliant paths
 - **Molecule testing** with Docker for CI validation
@@ -94,6 +94,7 @@ ansible-playbook local.yml --check
 | `go` | Go programming language | `go-update` |
 | `gopass` | Password manager | `gopass-update` |
 | `gpg` | GPG and YubiKey support | - |
+| `herdr` | Herdr agent runtime | `herdr-update` |
 | `i3blocks` | i3blocks status bar | `i3blocks-update` |
 | `kubectl` | Kubernetes CLI | - |
 | `neovim` | Neovim from source | `neovim-update` |
@@ -139,6 +140,7 @@ roles/<name>/
 │   ├── go/                # Go language
 │   ├── gopass/            # Password manager
 │   ├── gpg/               # GPG/YubiKey
+│   ├── herdr/             # Herdr agent runtime
 │   ├── i3blocks/          # Status bar
 │   ├── kubectl/           # Kubernetes CLI
 │   ├── neovim/            # Neovim editor
