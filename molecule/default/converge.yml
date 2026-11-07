@@ -78,12 +78,6 @@
       tags:
         - gpg
 
-    - name: Include regolith role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/regolith"
-      tags:
-        - regolith
-
     # Test docker role
     - name: Include docker role
       ansible.builtin.include_role:

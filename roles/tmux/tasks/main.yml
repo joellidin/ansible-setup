@@ -12,6 +12,33 @@
     - tmux-update
     - update
 
+# A checkout cloned or built as root makes git refuse the directory
+# ("dubious ownership") and the user-level build fail, so hand it back first.
+- name: Find files in the tmux source tree not owned by the current user
+  ansible.builtin.command:
+    cmd: find {{ tmux_src_dir }} ! -user {{ ansible_user_id }} -print -quit
+  register: tmux_foreign_files
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - tmux
+    - tmux-update
+    - update
+
+- name: Take ownership of the tmux source tree
+  become: true
+  ansible.builtin.command:
+    cmd: chown -R {{ ansible_user_id }}:{{ ansible_user_gid }} {{ tmux_src_dir }}
+  when: tmux_foreign_files.stdout | default('') | length > 0
+  changed_when: true
+  tags:
+    - install
+    - tmux
+    - tmux-update
+    - update
+
 - name: Clone or update tmux repository
   ansible.builtin.git:
     repo: "{{ tmux_repo }}"

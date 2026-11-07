@@ -43,10 +43,6 @@
       tags:
         - install
         - gpg
-    - role: regolith
-      tags:
-        - install
-        - regolith
     - role: rust
       tags:
         - install

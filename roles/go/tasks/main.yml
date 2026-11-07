@@ -1,29 +1,99 @@
 ---
-# Go role - installs Go programming language
+# Go role - installs the Go toolchain from go.dev, tracking the latest stable
+# release unless go_version is pinned.
 
 - name: Check current Go version
   ansible.builtin.command: "{{ go_install_path }}/bin/go version"
   register: go_version_check
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - go
+    - go-update
+    - update
 
 - name: Extract installed Go version
   ansible.builtin.set_fact:
-    go_installed_version: "{{ go_version_check.stdout | regex_search('go([0-9.]+)', '\\1') | first | default('0') }}"
-  when: go_version_check.rc == 0
+    go_installed_version: >-
+      {{ go_version_check.stdout | regex_search('go([0-9.]+)', '\1') | first
+         if go_version_check.rc == 0 else '0' }}
   tags:
     - install
     - go
+    - go-update
+    - update
+
+- name: Fetch Go release feed
+  ansible.builtin.uri:
+    url: "{{ go_release_feed }}"
+    return_content: true
+  register: go_releases
+  check_mode: false
+  tags:
+    - install
+    - go
+    - go-update
+    - update
+
+- name: Resolve Go release
+  ansible.builtin.set_fact:
+    go_release: >-
+      {{ (go_releases.json | selectattr('stable') | list)
+         if go_version == 'latest'
+         else (go_releases.json | selectattr('version', 'equalto', 'go' ~ go_version) | list) }}
+  tags:
+    - install
+    - go
+    - go-update
+    - update
+
+- name: Verify the requested Go release exists
+  ansible.builtin.assert:
+    that:
+      - go_release | length > 0
+    fail_msg: "No Go release matching '{{ go_version }}' found in {{ go_release_feed }}"
+    quiet: true
+  tags:
+    - install
+    - go
+    - go-update
+    - update
+
+- name: Select Go tarball for this architecture
+  ansible.builtin.set_fact:
+    go_target_version: "{{ go_release[0].version | regex_replace('^go', '') }}"
+    go_tarball: >-
+      {{ go_release[0].files
+         | selectattr('os', 'equalto', 'linux')
+         | selectattr('arch', 'equalto', go_arch)
+         | selectattr('kind', 'equalto', 'archive')
+         | list }}
+  tags:
+    - install
+    - go
+    - go-update
+    - update
+
+- name: Verify a tarball exists for this architecture
+  ansible.builtin.assert:
+    that:
+      - go_tarball | length > 0
+    fail_msg: "Go {{ go_target_version }} has no linux-{{ go_arch }} tarball"
+    quiet: true
+  tags:
+    - install
+    - go
+    - go-update
+    - update
 
 - name: Determine if Go installation needed
   ansible.builtin.set_fact:
     go_needs_install: >-
       {{ force_rebuild | default(false) or
          go_version_check.rc != 0 or
-         (go_installed_version | default('0')) != go_version }}
+         go_installed_version != go_target_version }}
   tags:
     - install
     - go
@@ -32,9 +102,9 @@
 
 - name: Download Go tarball
   ansible.builtin.get_url:
-    url: "{{ go_download_url | default('https://go.dev/dl/go' + go_version + '.linux-amd64.tar.gz') }}"
-    dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
-    checksum: "{{ go_checksum | default(omit) }}"
+    url: "{{ go_download_url | default('https://go.dev/dl/' ~ go_tarball[0].filename) }}"
+    dest: "{{ go_download_dir }}/{{ go_tarball[0].filename }}"
+    checksum: "{{ go_checksum | default('sha256:' ~ go_tarball[0].sha256) }}"
     mode: "0440"
   when: go_needs_install
   tags:
@@ -58,8 +128,8 @@
 - name: Extract Go tarball
   become: true
   ansible.builtin.unarchive:
-    src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
-    dest: /usr/local
+    src: "{{ go_download_dir }}/{{ go_tarball[0].filename }}"
+    dest: "{{ go_install_path | dirname }}"
     remote_src: true
   when: go_needs_install
   tags:
@@ -70,7 +140,7 @@
 
 - name: Clean up Go tarball
   ansible.builtin.file:
-    path: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+    path: "{{ go_download_dir }}/{{ go_tarball[0].filename }}"
     state: absent
   when: go_needs_install
   tags:

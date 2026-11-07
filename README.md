@@ -4,7 +4,7 @@ Ansible playbook for bootstrapping a complete development environment on Ubuntu.
 
 ## Features
 
-- **23 modular roles** for installing and configuring development tools
+- **22 modular roles** for installing and configuring development tools
 - **Update mechanism** with `--tags update` to keep tools current
 - **XDG Base Directory** compliant paths
 - **Molecule testing** with Docker for CI validation
@@ -12,16 +12,20 @@ Ansible playbook for bootstrapping a complete development environment on Ubuntu.
 ## Quick Start
 
 ```bash
-# Install Ansible
-sudo apt update && sudo apt install -y ansible
+# Install uv (provides a current ansible-core without touching system Python)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone this repository
 git clone https://github.com/joellidin/ansible-setup.git
 cd ansible-setup
 
-# Run the playbook
-ansible-playbook local.yml --ask-become-pass
+# Run the playbook (the gh role copies vault-encrypted config, so it needs the vault password)
+uvx --from ansible-core ansible-playbook local.yml --ask-become-pass --ask-vault-pass
 ```
+
+Ubuntu 26.04 ships sudo-rs as the default sudo. The ansible-core packaged by
+Ubuntu does not recognise its password prompt and every become task times out,
+so run the playbook with a current ansible-core through uvx as shown above.
 
 ## Requirements
 
@@ -35,7 +39,7 @@ All configuration is centralized in `group_vars/all.yml`:
 
 ```yaml
 # Tool versions
-go_version: "1.23.4"
+go_version: latest  # or pin, e.g. "1.27.3"
 kubectl_version: "v1.31"
 node_version: "20"
 
@@ -101,7 +105,6 @@ ansible-playbook local.yml --check
 | `neovim` | Neovim from source | `neovim-update` |
 | `node` | Node.js via n version manager | `node-update` |
 | `python` | Python via uv | `python-update` |
-| `regolith` | Regolith desktop environment | - |
 | `rust` | Rust via rustup | `rust-update` |
 | `tmux` | Tmux from source | `tmux-update` |
 | `vault` | HashiCorp Vault | - |
@@ -148,7 +151,6 @@ roles/<name>/
 │   ├── neovim/            # Neovim editor
 │   ├── node/              # Node.js
 │   ├── python/            # Python/uv
-│   ├── regolith/          # Desktop environment
 │   ├── rust/              # Rust language
 │   ├── tmux/              # Terminal multiplexer
 │   ├── vault/             # HashiCorp Vault
@@ -186,7 +188,7 @@ uvx ansible-lint
 Edit `group_vars/all.yml`:
 
 ```yaml
-go_version: "1.24.0"  # Update version
+go_version: "1.27.3"  # pin instead of tracking latest
 ```
 
 ### Changing Browser

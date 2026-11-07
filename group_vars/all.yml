@@ -10,7 +10,7 @@
 # -----------------------------------------------------------------------------
 # Keeping versions centralized makes upgrades straightforward and auditable.
 
-go_version: "1.26.0"
+go_version: latest  # newest stable from go.dev; pin e.g. "1.27.3" to freeze
 kubectl_version: "v1.31"
 gopass_version: "1.16.1"
 node_version: "20"
@@ -68,7 +68,6 @@ gopass_store_repo: "https://github.com/joellidin/private-pass.git"
 # Download URLs
 # -----------------------------------------------------------------------------
 
-go_download_url: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
 gopass_download_url: >-
   https://github.com/gopasspw/gopass/releases/download/v{{ gopass_version
   }}/gopass-{{ gopass_version }}-linux-amd64.tar.gz
@@ -79,8 +78,7 @@ gopass_download_url: >-
 # Verify downloads to prevent tampering. Update these when changing versions.
 # Get checksums from official release pages.
 
-# Go 1.26.0: https://go.dev/dl/
-go_checksum: "sha256:aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235"
+# Go: checksums come from the go.dev release feed; set go_checksum only to override.
 
 # -----------------------------------------------------------------------------
 # Application Choices
