@@ -19,42 +19,101 @@
     - neovim-update
     - update
   block:
+    # Neovim re-points the `stable` and `nightly` tags on every release. A plain
+    # `git fetch --tags` refuses to overwrite a local tag that already exists at a
+    # different commit ("would clobber existing tag"). force=true makes the git
+    # module pass --force to the fetch so moving tags update. It also discards
+    # local edits in the checkout, which is fine for a build directory we own.
     - name: Clone or update Neovim repository
       ansible.builtin.git:
         repo: "{{ neovim_repo }}"
         dest: "{{ neovim_src_dir }}"
         version: "{{ neovim_version }}"
         update: true
-        force: false
+        force: true
       register: neovim_clone
+
+    # A build that once ran as root leaves root-owned files in build/ and .deps/,
+    # after which the unprivileged build step cannot write there. Hand the tree
+    # back to the user before building.
+    - name: Look for files in the source tree owned by another user
+      ansible.builtin.command:
+        cmd: >-
+          find {{ neovim_src_dir }} -path {{ neovim_src_dir }}/.git -prune
+          -o -not -user {{ ansible_user_id }} -print -quit
+      register: neovim_foreign_files
+      changed_when: false
+      check_mode: false
+
+    - name: Take ownership of the source tree
+      become: true
+      ansible.builtin.command:
+        cmd: chown -R {{ ansible_user_id }}:{{ ansible_user_gid }} {{ neovim_src_dir }}
+      when: neovim_foreign_files.stdout | default('') | length > 0
+      changed_when: true
+
+    # The commit of the last successful install. Comparing it with the checkout
+    # means a failed build is retried on the next run instead of being skipped.
+    - name: Read commit of the last installed Neovim build
+      ansible.builtin.command:
+        cmd: cat {{ neovim_src_dir }}/.ansible-installed-commit
+      register: neovim_installed_commit
+      changed_when: false
+      failed_when: false
+      check_mode: false
 
     - name: Build Neovim
       community.general.make:
         chdir: "{{ neovim_src_dir }}"
         params:
           CMAKE_BUILD_TYPE: "{{ neovim_build_type }}"
-      when: neovim_clone.changed or neovim_installed.rc != 0
+      when: >-
+        force_rebuild | default(false) | bool
+        or neovim_installed.rc != 0
+        or (neovim_installed_commit.stdout | default('')) != neovim_clone.after
       register: neovim_build
 
+    # `cmake --install` only copies the already-built files. `make install`
+    # would first re-run the build as root and litter build/ with root-owned
+    # files.
     - name: Install Neovim
       become: true
-      community.general.make:
-        chdir: "{{ neovim_src_dir }}"
-        target: install
+      ansible.builtin.command:
+        cmd: cmake --install {{ neovim_src_dir }}/build
+      when: neovim_build.changed | default(false)
+      changed_when: true
+
+    # The install step writes this one file as root.
+    - name: Restore ownership of the install manifest
+      become: true
+      ansible.builtin.file:
+        path: "{{ neovim_src_dir }}/build/install_manifest.txt"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+      when: neovim_build.changed | default(false)
+
+    - name: Record the installed Neovim commit
+      ansible.builtin.copy:
+        content: "{{ neovim_clone.after }}\n"
+        dest: "{{ neovim_src_dir }}/.ansible-installed-commit"
+        mode: "0644"
       when: neovim_build.changed | default(false)
 
   rescue:
-    - name: Neovim build failed - display error
+    - name: Neovim install failed - display error
       ansible.builtin.debug:
         msg: |
-          Neovim build failed. This is often due to missing dependencies.
+          Step "{{ ansible_failed_task.name }}" failed:
+            {{ ansible_failed_result.msg | default('see task output above') }}
+
+          If the build step failed, this is often due to missing dependencies.
           Please ensure build requirements are installed (core role).
-          You can also try cleaning the build directory:
-            rm -rf {{ neovim_src_dir }}/build
+          You can also try a clean build by removing the build directories:
+            rm -rf {{ neovim_src_dir }}/build {{ neovim_src_dir }}/.deps
 
     - name: Fail with helpful message
       ansible.builtin.fail:
-        msg: "Neovim build failed. See above for troubleshooting steps."
+        msg: "Neovim install failed at step: {{ ansible_failed_task.name }}"
 
 - name: Check if StyLua is installed
   ansible.builtin.command: "{{ neovim_cargo_home }}/bin/stylua --version"

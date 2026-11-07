@@ -59,6 +59,7 @@ gopass_store_path: "{{ local_share }}/gopass/stores/root"
 
 dotfiles_repo: "https://github.com/joellidin/dotfiles.git"
 neovim_repo: "https://github.com/neovim/neovim.git"
+neovim_version: master  # 0.13 dev; use "stable" for releases or "nightly" for daily snapshots
 tmux_repo: "https://github.com/tmux/tmux.git"
 i3blocks_repo: "https://github.com/vivien/i3blocks"
 gopass_store_repo: "https://github.com/joellidin/private-pass.git"
