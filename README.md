@@ -4,7 +4,7 @@ Ansible playbook for bootstrapping a complete development environment on Ubuntu.
 
 ## Features
 
-- **22 modular roles** for installing and configuring development tools
+- **23 modular roles** for installing and configuring development tools
 - **Update mechanism** with `--tags update` to keep tools current
 - **XDG Base Directory** compliant paths
 - **Molecule testing** with Docker for CI validation
@@ -87,6 +87,7 @@ ansible-playbook local.yml --check
 | `browser` | Zen or Brave browser | `zen-update` |
 | `claude_code` | Claude Code CLI | `claude-code-update` |
 | `core` | Build dependencies, fonts, productivity tools | - |
+| `delta` | Git pager with syntax highlighting | `delta-update` |
 | `docker` | Docker Engine and compose | - |
 | `dotfiles` | Personal dotfiles via stow | - |
 | `gh` | GitHub CLI with config | - |
@@ -133,6 +134,7 @@ roles/<name>/
 │   ├── browser/           # Browser installation
 │   ├── claude_code/       # Claude Code CLI
 │   ├── core/              # Build deps, fonts, tools
+│   ├── delta/             # Git pager
 │   ├── docker/            # Docker Engine
 │   ├── dotfiles/          # Dotfiles management
 │   ├── gh/                # GitHub CLI

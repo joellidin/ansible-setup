@@ -224,3 +224,11 @@
         - herdr
         - herdr-update
         - update
+
+    - name: Include delta role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/delta"
+      tags:
+        - delta
+        - delta-update
+        - update

@@ -152,6 +152,12 @@
         - herdr
         - herdr-update
         - update
+    - role: delta
+      tags:
+        - install
+        - delta
+        - delta-update
+        - update
   tasks:
     - name: Setup productivity tools
       ansible.builtin.import_tasks: tasks/productivity-tools.yml

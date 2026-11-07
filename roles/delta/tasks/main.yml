@@ -1,0 +1,59 @@
+---
+# Delta role - installs git-delta (syntax-highlighting git pager) from the upstream deb
+
+- name: Check if delta is installed
+  ansible.builtin.command: delta --version
+  register: delta_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - delta
+    - delta-update
+    - update
+
+- name: Determine if delta needs install or update
+  ansible.builtin.set_fact:
+    delta_needs_install: "{{ delta_check.rc != 0 or delta_version not in delta_check.stdout }}"
+  tags:
+    - install
+    - delta
+    - delta-update
+    - update
+
+- name: Download delta deb package
+  ansible.builtin.get_url:
+    url: "{{ delta_download_url }}"
+    dest: "{{ delta_download_dir }}/{{ delta_deb_name }}"
+    checksum: "{{ delta_checksums[delta_arch] }}"
+    mode: "0644"
+  when: delta_needs_install
+  tags:
+    - install
+    - delta
+    - delta-update
+    - update
+
+- name: Install delta deb package
+  become: true
+  ansible.builtin.apt:
+    deb: "{{ delta_download_dir }}/{{ delta_deb_name }}"
+    state: present
+  when: delta_needs_install
+  tags:
+    - install
+    - delta
+    - delta-update
+    - update
+
+- name: Clean up delta deb package
+  ansible.builtin.file:
+    path: "{{ delta_download_dir }}/{{ delta_deb_name }}"
+    state: absent
+  when: delta_needs_install
+  tags:
+    - install
+    - delta
+    - delta-update
+    - update

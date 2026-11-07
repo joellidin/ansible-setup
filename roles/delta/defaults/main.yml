@@ -1,0 +1,21 @@
+---
+# Delta role defaults
+
+# git-delta version (the role owns the version)
+delta_version: "0.20.1"
+
+# Architecture mapping (release debs use amd64 / arm64)
+delta_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+
+# SHA-256 of the release debs for the pinned version
+# Refresh with: gh api repos/dandavison/delta/releases/tags/<version> --jq '.assets[] | "\(.name) \(.digest)"'
+delta_checksums:
+  amd64: "sha256:0683067a4cbbcc19b9fd2841253131d1b37ccfa724725098d811d4d0d9fcc25b"
+  arm64: "sha256:6e08b734d611037eb9eb5db883cab7ac0a089216a9efdc1d2caac44319029c28"
+
+# Download URL (git-delta is not in the Ubuntu archive, upstream publishes glibc debs)
+delta_deb_name: "git-delta_{{ delta_version }}_{{ delta_arch }}.deb"
+delta_download_url: "https://github.com/dandavison/delta/releases/download/{{ delta_version }}/{{ delta_deb_name }}"
+
+# Download directory
+delta_download_dir: "{{ cache_home }}"
