@@ -8,10 +8,10 @@ dotfiles_repo: "https://github.com/joellidin/dotfiles.git"
 dotfiles_version: "main"
 
 # Destination directory for bare git repo
-dotfiles_dir: "{{ ansible_env.HOME }}/.dotfiles"
+dotfiles_dir: "{{ home_dir }}/.dotfiles"
 
 # Home directory (worktree)
-dotfiles_home: "{{ ansible_env.HOME }}"
+dotfiles_home: "{{ home_dir }}"
 
 # Backup directory for existing configs
-dotfiles_backup_dir: "{{ ansible_env.HOME }}/.config-backup"
+dotfiles_backup_dir: "{{ home_dir }}/.config-backup"

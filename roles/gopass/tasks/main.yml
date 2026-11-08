@@ -1,30 +1,13 @@
 ---
-# Gopass role - installs gopass password manager
+# Gopass role - zsh completion and password store for the mise-installed gopass
 
-- name: Check if gopass is installed
-  ansible.builtin.command: "{{ gopass_bin_dir }}/gopass --version"
-  register: gopass_check
+- name: Verify gopass is available
+  ansible.builtin.command: "{{ gopass_bin }} --version"
   changed_when: false
-  failed_when: false
+  check_mode: false
   tags:
     - install
     - gopass
-    - gopass-update
-    - update
-
-- name: Download and extract gopass binary
-  ansible.builtin.unarchive:
-    src: "{{ gopass_download_url }}"
-    dest: "{{ gopass_bin_dir }}"
-    remote_src: true
-    include:
-      - gopass
-  when: gopass_check.rc != 0 or gopass_version not in gopass_check.stdout
-  tags:
-    - install
-    - gopass
-    - gopass-update
-    - update
 
 - name: Create gopass directory in Oh-My-Zsh
   ansible.builtin.file:
@@ -45,10 +28,34 @@
 
 - name: Generate gopass completion
   ansible.builtin.shell: >
-    {{ gopass_bin_dir }}/gopass completion zsh
+    {{ gopass_bin }} completion zsh
     > {{ gopass_omz_path }}/plugins/gopass/_gopass
   when: not gopass_completion_stat.stat.exists
   changed_when: true
+  tags:
+    - install
+    - gopass
+
+# The store is a private repository. On a machine without GitHub credentials
+# (gh auth login, or the YubiKey SSH key) the clone is skipped with a note
+# instead of failing the whole run.
+- name: Check access to the password store repository
+  ansible.builtin.command: git ls-remote --exit-code {{ gopass_store_repo }} HEAD
+  register: gopass_store_access
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: gopass_store_repo | length > 0
+  tags:
+    - install
+    - gopass
+
+- name: Explain how to get the password store later
+  ansible.builtin.debug:
+    msg: >-
+      Cannot reach {{ gopass_store_repo }} with the current credentials.
+      Run `gh auth login` (or plug in the YubiKey) and re-run `--tags gopass`.
+  when: gopass_store_repo | length > 0 and gopass_store_access.rc != 0
   tags:
     - install
     - gopass
@@ -58,7 +65,7 @@
     path: "{{ gopass_store_path }}"
     state: directory
     mode: "0700"
-  when: gopass_store_repo | length > 0
+  when: gopass_store_repo | length > 0 and gopass_store_access.rc == 0
   tags:
     - install
     - gopass
@@ -67,8 +74,13 @@
   ansible.builtin.git:
     repo: "{{ gopass_store_repo }}"
     dest: "{{ gopass_store_path }}"
+    version: HEAD
     update: true
-  when: gopass_store_repo | length > 0
+  when: gopass_store_repo | length > 0 and gopass_store_access.rc == 0
+  register: gopass_store_clone
+  until: gopass_store_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - gopass

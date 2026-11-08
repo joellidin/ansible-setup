@@ -1,0 +1,295 @@
+---
+# i3lock_color role - builds i3lock-color from source and installs betterlockscreen
+
+- name: Install i3lock-color build dependencies
+  become: true
+  ansible.builtin.apt:
+    name: "{{ i3lock_color_build_deps }}"
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Check if i3lock-color is installed
+  ansible.builtin.command: "{{ i3lock_color_bin }} --version"
+  register: i3lock_color_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# A checkout cloned or built as root makes git refuse the directory
+# ("dubious ownership") and the user-level build fail, so hand it back first.
+- name: Find files in the i3lock-color source tree not owned by the current user
+  ansible.builtin.command:
+    cmd: find {{ i3lock_color_src_dir }} ! -user {{ ansible_facts['user_id'] }} -print -quit
+  register: i3lock_color_foreign_files
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Take ownership of the i3lock-color source tree
+  become: true
+  ansible.builtin.command:
+    cmd: chown -R {{ ansible_facts['user_id'] }}:{{ ansible_facts['user_gid'] }} {{ i3lock_color_src_dir }}
+  when: i3lock_color_foreign_files.stdout | default('') | length > 0
+  changed_when: true
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Clone or update i3lock-color repository
+  ansible.builtin.git:
+    repo: "{{ i3lock_color_repo }}"
+    dest: "{{ i3lock_color_src_dir }}"
+    version: "{{ i3lock_color_version }}"
+    update: true
+    force: false
+  register: i3lock_color_clone
+  until: i3lock_color_clone is succeeded
+  retries: 3
+  delay: 10
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# The commit of the last successful install. Comparing it with the checkout
+# means a failed build is retried on the next run instead of being skipped.
+- name: Read commit of the last installed i3lock-color build
+  ansible.builtin.command:
+    cmd: cat {{ i3lock_color_src_dir }}/.ansible-installed-commit
+  register: i3lock_color_installed_commit
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# build.sh runs autoreconf, configure and make inside build/, wiping it first,
+# so every build starts clean.
+- name: Build i3lock-color
+  ansible.builtin.command:
+    cmd: ./build.sh
+    chdir: "{{ i3lock_color_src_dir }}"
+  when: >-
+    force_rebuild | default(false) | bool
+    or i3lock_color_installed.rc != 0
+    or (i3lock_color_installed_commit.stdout | default('') | trim) != i3lock_color_clone.after
+  register: i3lock_color_build
+  changed_when: true
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# `make install` would overwrite /usr/bin/i3lock from the Ubuntu i3lock package,
+# so only the binary is installed, under the name betterlockscreen looks for.
+- name: Install i3lock-color binary
+  become: true
+  ansible.builtin.copy:
+    src: "{{ i3lock_color_src_dir }}/build/i3lock"
+    dest: "{{ i3lock_color_bin }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  when: i3lock_color_build.changed | default(false)
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Record the installed i3lock-color commit
+  ansible.builtin.copy:
+    content: "{{ i3lock_color_clone.after }}\n"
+    dest: "{{ i3lock_color_src_dir }}/.ansible-installed-commit"
+    mode: "0644"
+  when: i3lock_color_build.changed | default(false)
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# Upstream's stock PAM file. Only created when missing: a locally customised
+# file (for example one adding pam_fprintd) is never overwritten.
+- name: Install default PAM configuration for i3lock
+  become: true
+  ansible.builtin.copy:
+    content: |
+      #
+      # PAM configuration file for the i3lock-color screen locker.
+      # Created by the ansible i3lock_color role only if missing; local edits are kept.
+      #
+      auth include login
+    dest: /etc/pam.d/i3lock
+    owner: root
+    group: root
+    mode: "0644"
+    force: false
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Install betterlockscreen dependencies
+  become: true
+  ansible.builtin.apt:
+    name: "{{ i3lock_color_betterlockscreen_packages }}"
+    state: present
+    cache_valid_time: 3600
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# Read-only GET; runs in check mode too so the version comparison below works there.
+- name: Get latest betterlockscreen release info
+  ansible.builtin.uri:
+    timeout: 60
+    url: "https://api.github.com/repos/{{ i3lock_color_betterlockscreen_repo }}/releases/latest"
+    return_content: true
+    headers: "{{ github_api_headers }}"
+  register: i3lock_color_betterlockscreen_release
+  check_mode: false
+  when: i3lock_color_betterlockscreen_version == 'latest'
+  until: i3lock_color_betterlockscreen_release is succeeded
+  retries: 5
+  delay: 10
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Determine betterlockscreen tag to install
+  ansible.builtin.set_fact:
+    i3lock_color_betterlockscreen_tag: >-
+      {{ i3lock_color_betterlockscreen_release.json.tag_name
+         if i3lock_color_betterlockscreen_version == 'latest' else i3lock_color_betterlockscreen_version }}
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Check if betterlockscreen is installed
+  ansible.builtin.stat:
+    path: "{{ i3lock_color_betterlockscreen_bin }}"
+  register: i3lock_color_betterlockscreen_installed
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# `betterlockscreen --version` prints the script's embedded VERSION, which does not
+# track the release tag (v4.4.0 reports 4.3.0), so the installed tag is kept here.
+- name: Read tag of the last installed betterlockscreen
+  ansible.builtin.command:
+    cmd: cat {{ i3lock_color_betterlockscreen_marker }}
+  register: i3lock_color_betterlockscreen_installed_tag
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Determine if betterlockscreen needs install or update
+  ansible.builtin.set_fact:
+    i3lock_color_betterlockscreen_needs_install: >-
+      {{ not i3lock_color_betterlockscreen_installed.stat.exists
+         or (i3lock_color_betterlockscreen_installed_tag.stdout | default('') | trim)
+            != i3lock_color_betterlockscreen_tag }}
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Create betterlockscreen staging directory
+  ansible.builtin.file:
+    path: "{{ i3lock_color_betterlockscreen_src_dir }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+# Releases carry no assets, so fetch the script from the tagged tree.
+- name: Download betterlockscreen script
+  ansible.builtin.get_url:
+    timeout: 60
+    url: >-
+      https://raw.githubusercontent.com/{{ i3lock_color_betterlockscreen_repo
+      }}/{{ i3lock_color_betterlockscreen_tag }}/betterlockscreen
+    dest: "{{ i3lock_color_betterlockscreen_src_dir }}/betterlockscreen"
+    checksum: "{{ i3lock_color_betterlockscreen_checksum | default(omit, true) }}"
+    force: true
+    mode: "0644"
+  when: i3lock_color_betterlockscreen_needs_install
+  register: i3lock_color_betterlockscreen_download
+  until: i3lock_color_betterlockscreen_download is succeeded
+  retries: 3
+  delay: 5
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Install betterlockscreen
+  become: true
+  ansible.builtin.copy:
+    src: "{{ i3lock_color_betterlockscreen_src_dir }}/betterlockscreen"
+    dest: "{{ i3lock_color_betterlockscreen_bin }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  when: i3lock_color_betterlockscreen_needs_install
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update
+
+- name: Record the installed betterlockscreen tag
+  ansible.builtin.copy:
+    content: "{{ i3lock_color_betterlockscreen_tag }}\n"
+    dest: "{{ i3lock_color_betterlockscreen_marker }}"
+    mode: "0644"
+  when: i3lock_color_betterlockscreen_needs_install
+  tags:
+    - install
+    - i3lock_color
+    - i3lock-color-update
+    - update

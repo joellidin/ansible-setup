@@ -1,0 +1,158 @@
+#!/bin/sh
+# bootstrap: one-line installer for https://github.com/joellidin/ansible-setup
+#
+# Served from the repo's docs/ directory via GitHub Pages at
+# https://get.lidin.xyz/bootstrap. It gets a fresh machine to a cloned repo
+# and then hands over to bootstrap.sh inside the repo, which shows a small
+# TUI (profile, roles, confirm) and runs the Ansible playbook.
+#
+# Usage:
+#   curl -fsSL https://get.lidin.xyz/bootstrap | sh
+#   curl -fsSL https://get.lidin.xyz/bootstrap | sh -s -- --profile dev --yes
+#
+# Flags after "--" are passed through to bootstrap.sh:
+#   --profile <name>   pick a profile from profiles.conf (skips screen 1)
+#   --yes              accept the profile's default roles (skips screens 2, 3)
+#
+# Environment:
+#   BOOTSTRAP_REF      git ref to check out, default "main"
+#   BOOTSTRAP_DIR      clone location, default "$HOME/ansible-setup"
+#   BOOTSTRAP_REPO     clone URL, default the public GitHub repo
+#   BOOTSTRAP_PROFILE  same as --profile
+#
+# Supported: Ubuntu >= 24.04 and macOS >= 15, on amd64 or arm64. Re-running
+# is safe: every step is skipped when already done. All logic lives in main(),
+# called on the last line, so a truncated download runs nothing.
+
+set -eu
+
+UV_VERSION="0.13.7"
+REPO_URL="${BOOTSTRAP_REPO:-https://github.com/joellidin/ansible-setup.git}"
+REPO_DIR="${BOOTSTRAP_DIR:-$HOME/ansible-setup}"
+REF="${BOOTSTRAP_REF:-main}"
+BREW_INSTALLER="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+
+TMP_DIR=""
+SUDO_PID=""
+
+log() { printf '==> %s\n' "$*"; }
+die() { printf 'bootstrap: %s\n' "$*" >&2; exit 1; }
+
+cleanup() {
+  [ -n "$SUDO_PID" ] && kill "$SUDO_PID" 2>/dev/null || true
+  [ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+}
+
+os_release() { sed -n "s/^$1=//p" /etc/os-release | tr -d '"'; }
+
+detect_platform() {
+  case "$(uname -s)" in
+    Linux)
+      OS=linux
+      [ -r /etc/os-release ] || die "cannot read /etc/os-release"
+      [ "$(os_release ID)" = "ubuntu" ] || die "Linux support is limited to Ubuntu"
+      OS_VERSION="$(os_release VERSION_ID)"
+      [ "${OS_VERSION%%.*}" -ge 24 ] 2>/dev/null || die "Ubuntu >= 24.04 required, found $OS_VERSION"
+      ;;
+    Darwin)
+      OS=darwin
+      OS_VERSION="$(sw_vers -productVersion)"
+      [ "${OS_VERSION%%.*}" -ge 15 ] 2>/dev/null || die "macOS >= 15 required, found $OS_VERSION"
+      ;;
+    *) die "unsupported operating system: $(uname -s)" ;;
+  esac
+  case "$(uname -m)" in
+    x86_64 | amd64) ARCH=amd64 ;;
+    aarch64 | arm64) ARCH=arm64 ;;
+    *) die "unsupported architecture: $(uname -m)" ;;
+  esac
+}
+
+start_sudo_keepalive() {
+  log "Requesting sudo access (used for package installs)"
+  sudo -v || die "sudo authentication failed"
+  ( while sudo -n -v 2>/dev/null; do sleep 50; done ) &
+  SUDO_PID=$!
+}
+
+install_prereqs_linux() {
+  if command -v git >/dev/null && command -v curl >/dev/null; then
+    return
+  fi
+  log "Installing git and curl with apt"
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git curl ca-certificates
+}
+
+install_prereqs_darwin() {
+  if ! command -v brew >/dev/null; then
+    for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      [ -x "$b" ] && eval "$("$b" shellenv)" && break
+    done
+  fi
+  if ! command -v brew >/dev/null; then
+    log "Installing Homebrew (also installs the Xcode Command Line Tools and git)"
+    curl -fsSL "$BREW_INSTALLER" -o "$TMP_DIR/brew-install.sh"
+    NONINTERACTIVE=1 /bin/bash "$TMP_DIR/brew-install.sh"
+    for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      [ -x "$b" ] && eval "$("$b" shellenv)" && break
+    done
+    command -v brew >/dev/null || die "Homebrew installation failed"
+  fi
+  command -v gum >/dev/null || brew install gum
+}
+
+install_uv() {
+  if command -v uv >/dev/null || [ -x "$HOME/.local/bin/uv" ]; then
+    return
+  fi
+  log "Installing uv $UV_VERSION into $HOME/.local/bin"
+  curl -fsSL "https://astral.sh/uv/$UV_VERSION/install.sh" -o "$TMP_DIR/uv-install.sh"
+  UV_NO_MODIFY_PATH=1 UV_INSTALL_DIR="$HOME/.local/bin" sh "$TMP_DIR/uv-install.sh" --quiet
+  [ -x "$HOME/.local/bin/uv" ] || die "uv installation failed"
+}
+
+sync_repo() {
+  if [ -d "$REPO_DIR/.git" ]; then
+    log "Updating $REPO_DIR"
+    git -C "$REPO_DIR" fetch --quiet --tags origin
+  else
+    log "Cloning $REPO_URL into $REPO_DIR"
+    git clone --quiet "$REPO_URL" "$REPO_DIR"
+  fi
+  git -C "$REPO_DIR" checkout --quiet "$REF" ||
+    die "cannot check out '$REF' in $REPO_DIR (uncommitted changes or unknown ref?)"
+  # Fast-forward when REF is a branch with an upstream; tags and commits are left as is.
+  if git -C "$REPO_DIR" symbolic-ref --quiet HEAD >/dev/null 2>&1; then
+    git -C "$REPO_DIR" merge --quiet --ff-only '@{u}' 2>/dev/null ||
+      log "Note: $REF has local changes that are not on origin, leaving it as is"
+  fi
+  [ -f "$REPO_DIR/bootstrap.sh" ] || die "$REPO_DIR/bootstrap.sh not found at ref '$REF'"
+}
+
+main() {
+  # When piped into sh, stdin is the script itself; take the terminal back so
+  # bootstrap.sh can prompt. Fails only when there is no terminal at all.
+  if ( : </dev/tty ) 2>/dev/null; then
+    exec </dev/tty
+  fi
+  [ "$(id -u)" -ne 0 ] || die "run as your normal user, not root; sudo is requested when needed"
+  detect_platform
+  log "Detected $OS $OS_VERSION ($ARCH)"
+  TMP_DIR="$(mktemp -d)"
+  trap cleanup EXIT INT TERM
+  start_sudo_keepalive
+  case "$OS" in
+    linux) install_prereqs_linux ;;
+    darwin) install_prereqs_darwin ;;
+  esac
+  install_uv
+  export PATH="$HOME/.local/bin:$PATH"
+  sync_repo
+  trap - EXIT INT TERM
+  cleanup
+  log "Handing over to $REPO_DIR/bootstrap.sh"
+  exec bash "$REPO_DIR/bootstrap.sh" install "$@"
+}
+
+main "$@"

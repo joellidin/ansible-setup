@@ -8,29 +8,50 @@
     # Project root for relative imports
     project_root: "{{ playbook_dir }}/../.."
 
-    # Override paths for test environment
-    local_bin: "{{ ansible_env.HOME }}/.local/bin"
-    local_src: "{{ ansible_env.HOME }}/.local/src"
-    local_share: "{{ ansible_env.HOME }}/.local/share"
-    local_state: "{{ ansible_env.HOME }}/.local/state"
-    config_home: "{{ ansible_env.HOME }}/.config"
-    cache_home: "{{ ansible_env.HOME }}/.cache"
-
-    # Skip certain tasks in CI that require external resources
-    skip_encrypted_files: true
+    # The repo's group_vars are not on molecule's inventory path, so the
+    # shared variables are repeated here.
+    # The play-level environment block is rendered before facts exist, so HOME
+    # falls back to the controller's environment.
+    home_dir: "{{ (ansible_facts['env'] | default({}))['HOME'] | default(lookup('env', 'HOME')) }}"
+    user_name: "{{ ansible_facts['user_id'] }}"
+    user_gid: "{{ ansible_facts['user_gid'] }}"
+    cpu_arch: "{{ ansible_facts['architecture'] }}"
+    deb_arch: "{{ 'amd64' if cpu_arch == 'x86_64' else 'arm64' }}"
+    distro_release: "{{ ansible_facts['distribution_release'] }}"
+    distro_version: "{{ ansible_facts['distribution_version'] }}"
+    local_bin: "{{ home_dir }}/.local/bin"
+    local_src: "{{ home_dir }}/.local/src"
+    local_share: "{{ home_dir }}/.local/share"
+    local_state: "{{ home_dir }}/.local/state"
+    config_home: "{{ home_dir }}/.config"
+    cache_home: "{{ home_dir }}/.cache"
+    cargo_home: "{{ local_share }}/cargo"
+    rustup_home: "{{ local_share }}/rustup"
+    mise_data_dir: "{{ local_share }}/mise"
+    mise_shims_dir: "{{ mise_data_dir }}/shims"
+    oh_my_zsh_path: "{{ local_src }}/oh-my-zsh"
+    dotfiles_path: "{{ home_dir }}/.dotfiles"
+    dotfiles_repo: "https://github.com/joellidin/dotfiles.git"
+    neovim_repo: "https://github.com/neovim/neovim.git"
+    neovim_version: master
+    tmux_repo: "https://github.com/tmux/tmux.git"
+    i3blocks_repo: "https://github.com/vivien/i3blocks"
+    browser_choice: "zen"
+    force_rebuild: false
+    gopass_store_repo: ""
+    github_token: "{{ lookup('env', 'GITHUB_TOKEN') | default('', true) }}"
+    github_api_headers: "{{ {'Authorization': 'Bearer ' ~ github_token} if github_token | length > 0 else {} }}"
 
     # Override role defaults for molecule paths
     core_fonts_source_dir: "{{ project_root }}/fonts"
 
   environment:
-    XDG_CONFIG_HOME: "{{ ansible_env.HOME }}/.config"
-    XDG_DATA_HOME: "{{ ansible_env.HOME }}/.local/share"
-    XDG_CACHE_HOME: "{{ ansible_env.HOME }}/.cache"
-    XDG_STATE_HOME: "{{ ansible_env.HOME }}/.local/state"
-    CARGO_HOME: "{{ ansible_env.HOME }}/.local/share/cargo"
-    RUSTUP_HOME: "{{ ansible_env.HOME }}/.local/share/rustup"
-    N_PREFIX: "{{ ansible_env.HOME }}/.local/share/n"
-    NPM_CONFIG_USERCONFIG: "{{ ansible_env.HOME }}/.config/npm/npmrc"
+    XDG_CONFIG_HOME: "{{ config_home }}"
+    XDG_DATA_HOME: "{{ local_share }}"
+    XDG_CACHE_HOME: "{{ cache_home }}"
+    XDG_STATE_HOME: "{{ local_state }}"
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
 
   pre_tasks:
     - name: Create required directories
@@ -52,167 +73,175 @@
         update_cache: true
         cache_valid_time: 3600
 
+  # include_role does not pass the task's tags into the role; apply does.
   tasks:
-    # Test core setup and productivity tools
-    - name: Include productivity tools
-      ansible.builtin.import_tasks: ../../tasks/productivity-tools.yml
-      tags:
-        - productivity
-
     - name: Include core role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/core"
+        apply:
+          tags:
+            - core
       tags:
         - core
 
     - name: Include dotfiles role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/dotfiles"
+        apply:
+          tags:
+            - dotfiles
       tags:
         - dotfiles
 
     - name: Include gpg role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/gpg"
-      when: not skip_encrypted_files
+        apply:
+          tags:
+            - gpg
       tags:
         - gpg
 
-    - name: Include regolith role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/regolith"
-      tags:
-        - regolith
-
-    # Test docker role
     - name: Include docker role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/docker"
+        apply:
+          tags:
+            - docker
       tags:
         - docker
 
-    # Test desktop and browser roles
+    - name: Include mise role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/mise"
+        apply:
+          tags:
+            - mise
+      tags:
+        - mise
+
     - name: Include zsh role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/zsh"
+        apply:
+          tags:
+            - zsh
       tags:
         - zsh
-
-    - name: Include kubectl role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/kubectl"
-      tags:
-        - kubectl
-
-    - name: Include vault role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/vault"
-      tags:
-        - vault
 
     - name: Include gopass role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/gopass"
-      vars:
-        gopass_store_repo: ""
+        apply:
+          tags:
+            - gopass
       tags:
         - gopass
-        - gopass-update
-        - update
 
     - name: Include browser role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/browser"
+        apply:
+          tags:
+            - browser
       tags:
         - browser
-        - zen-update
-        - update
 
-    # Test language roles
     - name: Include rust role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/rust"
+        apply:
+          tags:
+            - rust
       tags:
         - rust
-        - rust-update
-        - update
 
     - name: Include python role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/python"
+        apply:
+          tags:
+            - python
       tags:
         - python
-        - python-update
-        - update
 
-    - name: Include go role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/go"
-      tags:
-        - go
-        - go-update
-        - update
-
-    - name: Include node role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/node"
-      tags:
-        - node
-        - node-update
-        - update
-
-    - name: Include zig role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/zig"
-      tags:
-        - zig
-        - zig-update
-        - update
-
-    # Test dev tool roles
     - name: Include neovim role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/neovim"
+        apply:
+          tags:
+            - neovim
       tags:
         - neovim
-        - neovim-update
-        - update
 
     - name: Include tmux role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/tmux"
+        apply:
+          tags:
+            - tmux
       tags:
         - tmux
-        - tmux-update
-        - update
-
-    - name: Include gh role
-      ansible.builtin.include_role:
-        name: "{{ project_root }}/roles/gh"
-      when: not skip_encrypted_files
-      tags:
-        - gh
 
     - name: Include i3blocks role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/i3blocks"
+        apply:
+          tags:
+            - i3blocks
       tags:
         - i3blocks
-        - i3blocks-update
-        - update
 
     - name: Include ghostty role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/ghostty"
+        apply:
+          tags:
+            - ghostty
       tags:
         - ghostty
-        - ghostty-update
-        - update
+
+    - name: Include picom role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/picom"
+        apply:
+          tags:
+            - picom
+      tags:
+        - picom
+
+    - name: Include i3lock_color role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/i3lock_color"
+        apply:
+          tags:
+            - i3lock_color
+      tags:
+        - i3lock_color
+
+    - name: Include desktop role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/desktop"
+        apply:
+          tags:
+            - desktop
+      tags:
+        - desktop
 
     - name: Include claude_code role
       ansible.builtin.include_role:
         name: "{{ project_root }}/roles/claude_code"
+        apply:
+          tags:
+            - claude-code
       tags:
         - claude-code
-        - claude-code-update
-        - update
+
+    - name: Include herdr role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/herdr"
+        apply:
+          tags:
+            - herdr
+      tags:
+        - herdr

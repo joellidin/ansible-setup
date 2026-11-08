@@ -9,6 +9,10 @@
     update: true
     accept_hostkey: true
     version: "{{ dotfiles_version }}"
+  register: dotfiles_clone
+  until: dotfiles_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - dotfiles

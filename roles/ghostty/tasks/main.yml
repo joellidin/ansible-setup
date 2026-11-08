@@ -6,6 +6,7 @@
   register: ghostty_installed
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - ghostty
@@ -14,9 +15,14 @@
 
 - name: Get latest Ghostty release info
   ansible.builtin.uri:
+    timeout: 60
     url: "https://api.github.com/repos/{{ ghostty_ubuntu_repo }}/releases/latest"
     return_content: true
+    headers: "{{ github_api_headers }}"
   register: ghostty_release
+  until: ghostty_release is succeeded
+  retries: 5
+  delay: 10
   tags:
     - install
     - ghostty
@@ -38,12 +44,12 @@
   ansible.builtin.set_fact:
     ghostty_deb_url: >-
       {{ ghostty_release.json.assets
-         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ ansible_distribution_version ~ '\.deb$')
+         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ distro_version ~ '\.deb$')
          | map(attribute='browser_download_url')
          | first }}
     ghostty_deb_name: >-
       {{ ghostty_release.json.assets
-         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ ansible_distribution_version ~ '\.deb$')
+         | selectattr('name', 'match', '.*_' ~ ghostty_arch ~ '_' ~ distro_version ~ '\.deb$')
          | map(attribute='name')
          | first }}
   when: ghostty_needs_install
@@ -55,10 +61,15 @@
 
 - name: Download Ghostty deb package
   ansible.builtin.get_url:
+    timeout: 60
     url: "{{ ghostty_deb_url }}"
     dest: "{{ ghostty_download_dir }}/{{ ghostty_deb_name }}"
     mode: "0644"
   when: ghostty_needs_install
+  register: ghostty_deb_download
+  until: ghostty_deb_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - ghostty

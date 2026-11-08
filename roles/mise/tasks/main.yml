@@ -1,0 +1,288 @@
+---
+# mise role - installs mise itself from its GitHub release (checksum from the
+# release digest), then the tools declared in the global mise config.
+
+- name: Check installed mise version
+  ansible.builtin.command: "{{ mise_bin }} --version"
+  register: mise_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+- name: Get mise release info
+  ansible.builtin.uri:
+    timeout: 60
+    url: >-
+      https://api.github.com/repos/{{ mise_github_repo }}/releases/{{
+      'latest' if mise_version == 'latest' else 'tags/' ~ mise_version }}
+    return_content: true
+    headers: "{{ github_api_headers }}"
+  register: mise_release
+  check_mode: false
+  until: mise_release is succeeded
+  retries: 5
+  delay: 10
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+- name: Select the mise binary for this platform
+  ansible.builtin.set_fact:
+    mise_target_version: "{{ mise_release.json.tag_name | regex_replace('^v', '') }}"
+    mise_asset: >-
+      {{ mise_release.json.assets
+         | selectattr('name', 'equalto', 'mise-' ~ mise_release.json.tag_name ~ '-' ~ mise_os ~ '-' ~ mise_arch)
+         | list }}
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+- name: Verify a mise binary exists for this platform
+  ansible.builtin.assert:
+    that:
+      - mise_asset | length == 1
+    fail_msg: "No mise-{{ mise_release.json.tag_name }}-{{ mise_os }}-{{ mise_arch }} asset in the release"
+    quiet: true
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+- name: Ensure local bin directory exists
+  ansible.builtin.file:
+    path: "{{ local_bin }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - mise
+
+- name: Install or update the mise binary
+  ansible.builtin.get_url:
+    timeout: 60
+    url: "{{ mise_asset[0].browser_download_url }}"
+    dest: "{{ mise_bin }}"
+    checksum: "{{ mise_asset[0].digest }}"
+    mode: "0755"
+    force: true
+  when: mise_check.rc != 0 or not mise_check.stdout.startswith(mise_target_version)
+  register: mise_binary_download
+  until: mise_binary_download is succeeded
+  retries: 3
+  delay: 5
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+- name: Ensure mise config directory exists
+  ansible.builtin.file:
+    path: "{{ mise_config_dir }}"
+    state: directory
+    mode: "0755"
+  tags:
+    - install
+    - mise
+
+- name: Install the default mise config when the dotfiles did not provide one
+  ansible.builtin.copy:
+    src: config.toml
+    dest: "{{ mise_config_file }}"
+    mode: "0644"
+    force: false
+  tags:
+    - install
+    - mise
+
+- name: List tools missing from the mise config
+  ansible.builtin.command: "{{ mise_bin }} ls --missing"
+  register: mise_missing
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - mise
+
+# GitHub release downloads occasionally return 5xx; a retried `mise install`
+# only fetches what is still missing.
+- name: Install tools declared in the mise config
+  ansible.builtin.command: "{{ mise_bin }} install --yes"
+  environment:
+    GITHUB_TOKEN: "{{ github_token }}"
+  when: mise_missing.stdout | trim | length > 0
+  register: mise_install
+  changed_when: true
+  until: mise_install.rc == 0
+  retries: 3
+  delay: 15
+  tags:
+    - install
+    - mise
+
+- name: Check for outdated tools
+  ansible.builtin.command: "{{ mise_bin }} outdated --json"
+  register: mise_outdated
+  changed_when: false
+  check_mode: false
+  tags:
+    - mise-update
+    - update
+
+- name: Upgrade tools to the newest versions the config allows
+  ansible.builtin.command: "{{ mise_bin }} upgrade --yes"
+  environment:
+    GITHUB_TOKEN: "{{ github_token }}"
+  when: (mise_outdated.stdout | default('{}') | from_json) | length > 0
+  register: mise_upgrade
+  changed_when: true
+  until: mise_upgrade.rc == 0
+  retries: 3
+  delay: 15
+  tags:
+    - mise-update
+    - update
+
+- name: Remove tool versions no longer referenced
+  ansible.builtin.command: "{{ mise_bin }} prune --yes"
+  when: mise_upgrade.changed | default(false)
+  changed_when: true
+  tags:
+    - mise-update
+    - update
+
+- name: Check for the mise lockfile
+  ansible.builtin.stat:
+    path: "{{ mise_lock_file }}"
+  register: mise_lock_stat
+  tags:
+    - install
+    - mise
+
+# The lockfile pins exact versions, URLs and checksums per platform. It is
+# (re)written whenever tools were installed or upgraded, or when it is missing,
+# and belongs in the dotfiles next to config.toml.
+- name: Write the mise lockfile for all platforms
+  ansible.builtin.command: "{{ mise_bin }} lock --global --platform {{ mise_lock_platforms }}"
+  environment:
+    GITHUB_TOKEN: "{{ github_token }}"
+  when: >-
+    not mise_lock_stat.stat.exists
+    or mise_install.changed | default(false)
+    or mise_upgrade.changed | default(false)
+  register: mise_lock
+  changed_when: true
+  until: mise_lock.rc == 0
+  retries: 3
+  delay: 15
+  tags:
+    - install
+    - mise
+    - mise-update
+    - update
+
+# One-off cleanup of the installs mise replaces.
+- name: Remove apt repositories replaced by mise
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ mise_legacy_apt_sources }}"
+  register: mise_legacy_sources_removed
+  when: ansible_facts['os_family'] == 'Debian'
+  tags:
+    - install
+    - mise
+
+- name: Refresh apt cache after removing repositories
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: mise_legacy_sources_removed.changed | default(false)
+  tags:
+    - install
+    - mise
+
+- name: Remove apt-installed copies of tools now provided by mise
+  become: true
+  ansible.builtin.apt:
+    name: "{{ mise_legacy_apt_packages }}"
+    state: absent
+    purge: true
+  when: ansible_facts['os_family'] == 'Debian'
+  tags:
+    - install
+    - mise
+
+# A previous partial removal can leave node-* packages with unmet
+# dependencies; apt refuses everything else until that is repaired. The apt
+# module's `state: fixed` does nothing without package names, so call
+# apt-get directly. On a healthy system this installs nothing.
+- name: Repair broken apt dependencies
+  become: true
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - -y
+      - -f
+      - install
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  register: mise_apt_repair
+  changed_when: mise_apt_repair.stdout is search('[1-9][0-9]* (newly installed|to remove)')
+  when: ansible_facts['os_family'] == 'Debian'
+  tags:
+    - install
+    - mise
+
+- name: List Debian Node.js packages
+  ansible.builtin.shell: |
+    set -o pipefail
+    dpkg-query -W -f='${binary:Package} ${db:Status-Abbrev}\n' \
+      {{ mise_legacy_apt_patterns | map('quote') | join(' ') }} 2>/dev/null \
+      | awk '$2 ~ /^i/ { print $1 }'
+  args:
+    executable: /bin/bash
+  register: mise_debian_node_packages
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: ansible_facts['os_family'] == 'Debian'
+  tags:
+    - install
+    - mise
+
+- name: Remove the Debian Node.js stack (Node now comes from mise)
+  become: true
+  ansible.builtin.apt:
+    name: "{{ mise_debian_node_packages.stdout_lines }}"
+    state: absent
+    purge: true
+    autoremove: true
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+    - mise_debian_node_packages.stdout_lines | default([]) | length > 0
+  tags:
+    - install
+    - mise
+
+- name: Remove legacy tool installs replaced by mise
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ mise_legacy_paths }}"
+  tags:
+    - install
+    - mise

@@ -1,5 +1,5 @@
 ---
-# GPG role - manages GPG keys and Yubikey integration
+# GPG role - imports the public key, sets its trust, and checks for the YubiKey
 
 - name: Install Yubikey packages
   become: true
@@ -12,43 +12,93 @@
     - gpg
     - yubikey
 
-- name: Copy GPG public key
-  ansible.builtin.copy:
-    src: "{{ gpg_public_key_src }}"
-    dest: /tmp/pub.key
-    mode: '0644'
+- name: Check if GPG key is already imported
+  ansible.builtin.command: gpg --list-keys {{ gpg_key_fingerprint }}
+  register: gpg_key_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
   tags:
     - install
     - gpg
 
-- name: Check if GPG key is already imported
-  ansible.builtin.shell: gpg --list-keys {{ gpg_key_fingerprint }}
-  register: gpg_key_check
-  changed_when: false
-  failed_when: false
+- name: Download GPG public key
+  ansible.builtin.get_url:
+    timeout: 60
+    url: "{{ gpg_public_key_url }}"
+    dest: "{{ gpg_public_key_file }}"
+    mode: "0644"
+  when: gpg_key_check.rc != 0
+  register: gpg_key_download
+  until: gpg_key_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - gpg
 
 - name: Import GPG public key
-  ansible.builtin.shell: gpg --import /tmp/pub.key
+  ansible.builtin.command: gpg --import {{ gpg_public_key_file }}
   when: gpg_key_check.rc != 0
   changed_when: true
   tags:
     - install
     - gpg
 
-- name: Set GPG key trust level
-  ansible.builtin.shell: echo "{{ gpg_key_fingerprint }}:{{ gpg_trust_level }}:" | gpg --import-ownertrust
+- name: Verify the expected key is present
+  ansible.builtin.command: gpg --list-keys {{ gpg_key_fingerprint }}
   changed_when: false
+  check_mode: false
   tags:
     - install
     - gpg
 
-- name: Clean up temporary key file
-  ansible.builtin.file:
-    path: /tmp/pub.key
-    state: absent
+- name: Check current owner trust
+  ansible.builtin.shell: |
+    set -o pipefail
+    gpg --export-ownertrust | grep -F "{{ gpg_key_fingerprint }}:{{ gpg_trust_level }}:"
+  args:
+    executable: /bin/bash
+  register: gpg_trust_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
   tags:
     - install
     - gpg
+
+- name: Set GPG key trust level
+  ansible.builtin.shell: |
+    set -o pipefail
+    echo "{{ gpg_key_fingerprint }}:{{ gpg_trust_level }}:" | gpg --import-ownertrust
+  args:
+    executable: /bin/bash
+  when: gpg_trust_check.rc != 0
+  changed_when: true
+  tags:
+    - install
+    - gpg
+
+# The private key lives on the YubiKey. This does not fail the run; it tells
+# the user whether commit signing will work right away.
+- name: Check for a YubiKey
+  ansible.builtin.command: gpg --card-status
+  register: gpg_card_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - gpg
+    - yubikey
+
+- name: Report YubiKey status
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'YubiKey detected: commit signing is ready.'
+         if gpg_card_status.rc == 0
+         else 'No YubiKey detected. Plug it in and run gpg --card-status before signing commits.' }}
+  tags:
+    - install
+    - gpg
+    - yubikey

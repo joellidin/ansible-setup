@@ -27,6 +27,7 @@
   register: picom_installed
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - picom
@@ -41,6 +42,9 @@
     update: true
     force: false
   register: picom_clone
+  until: picom_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - picom
@@ -91,6 +95,7 @@
   args:
     chdir: "{{ picom_src_dir }}"
   when: picom_build.changed | default(false)
+  changed_when: true
   tags:
     - install
     - picom

@@ -1,8 +1,0 @@
----
-# Kubectl role defaults
-
-# Kubernetes version for apt repository
-kubectl_version: "v1.31"
-
-# GPG key path
-kubectl_keyring_path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg

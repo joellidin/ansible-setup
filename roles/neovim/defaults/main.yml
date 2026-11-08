@@ -6,11 +6,11 @@ neovim_repo: https://github.com/neovim/neovim.git
 neovim_version: stable
 
 # Installation paths
-neovim_src_dir: "{{ ansible_env.HOME }}/.local/src/neovim"
-neovim_data_path: "{{ ansible_env.HOME }}/.local/share/nvim"
+neovim_src_dir: "{{ home_dir }}/.local/src/neovim"
+neovim_data_path: "{{ home_dir }}/.local/share/nvim"
 
 # Cargo paths for stylua
-neovim_cargo_home: "{{ ansible_env.HOME }}/.local/share/cargo"
+neovim_cargo_home: "{{ home_dir }}/.local/share/cargo"
 
 # Build type (Release, RelWithDebInfo, Debug)
 neovim_build_type: RelWithDebInfo

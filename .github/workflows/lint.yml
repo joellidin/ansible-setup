@@ -9,34 +9,49 @@ on:
     branches:
       - main
 
-jobs:
-  lint:
-    name: Ansible Lint
-    runs-on: ubuntu-latest
+env:
+  ANSIBLE_CORE: "ansible-core>=2.22,<2.23"
 
+jobs:
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: Ansible lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
 
+      - name: Install Ansible collections
+        run: |
+          uvx --from "$ANSIBLE_CORE" ansible-galaxy collection install -r requirements.yml -p collections
+
       - name: Run yamllint
         run: |
           uvx yamllint -c .yamllint.yml .
-        continue-on-error: true
 
       - name: Run ansible-lint
         run: |
-          uvx ansible-lint --profile production
-        continue-on-error: true
+          uvx --with "$ANSIBLE_CORE" ansible-lint --profile production
 
-      - name: Install Ansible collections
+      - name: Check playbook syntax
         run: |
-          uvx --from ansible-core ansible-galaxy collection install community.general
+          uvx --from "$ANSIBLE_CORE" ansible-playbook local.yml --syntax-check
 
-      - name: Check syntax
+      - name: Lint shell scripts
         run: |
-          uvx --from ansible-core ansible-playbook -i localhost, local.yml --syntax-check
+          uvx --from shellcheck-py shellcheck docs/bootstrap bootstrap.sh

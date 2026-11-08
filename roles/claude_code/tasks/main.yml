@@ -6,6 +6,7 @@
   register: claude_code_installed
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - claude-code
@@ -22,10 +23,15 @@
 
 - name: Download Claude Code installer
   ansible.builtin.get_url:
+    timeout: 60
     url: "{{ claude_code_install_url }}"
     dest: "{{ claude_code_cache_dir }}/install.sh"
     mode: "0755"
   when: claude_code_installed.rc != 0
+  register: claude_code_installer_download
+  until: claude_code_installer_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - claude-code
@@ -36,6 +42,9 @@
   when: claude_code_installed.rc != 0
   register: claude_code_install
   changed_when: claude_code_install.rc == 0
+  until: claude_code_install.rc == 0
+  retries: 2
+  delay: 10
   tags:
     - install
     - claude-code

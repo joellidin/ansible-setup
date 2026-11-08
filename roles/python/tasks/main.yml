@@ -1,39 +1,71 @@
 ---
-# Python role - installs Python via uv package manager
+# Python role - installs uv and the latest CPython through it
 
 - name: Check if uv is installed
   ansible.builtin.stat:
     path: "{{ python_uv_bin }}"
   register: python_uv_check
+  check_mode: false
+  tags:
+    - install
+    - python
+    - uv
+
+- name: Download uv installer
+  ansible.builtin.get_url:
+    timeout: 60
+    url: "{{ python_uv_installer_url }}"
+    dest: "{{ python_uv_installer }}"
+    mode: "0755"
+  when: not python_uv_check.stat.exists
+  register: python_uv_download
+  until: python_uv_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - python
     - uv
 
 - name: Install uv
-  ansible.builtin.shell: curl -LsSf https://astral.sh/uv/install.sh | sh
+  ansible.builtin.command: "{{ python_uv_installer }}"
+  environment:
+    UV_NO_MODIFY_PATH: "1"
+    UV_INSTALL_DIR: "{{ local_bin }}"
   when: not python_uv_check.stat.exists
   changed_when: true
+  register: python_uv_install
+  until: python_uv_install.rc == 0
+  retries: 3
+  delay: 10
   tags:
     - install
     - python
     - uv
 
-- name: Install Python {{ python_version }}
-  ansible.builtin.command: "{{ python_uv_bin }} python install {{ python_version }}"
+- name: Install and set the default Python version {{ python_version }}
+  ansible.builtin.command: >-
+    {{ python_uv_bin }} python install --default
+    {{ '' if python_version == 'latest' else python_version }}
   register: python_install_result
   changed_when: "'Installed' in python_install_result.stderr"
   tags:
     - install
     - python
-    - python-update
-    - update
 
 - name: Update uv
   ansible.builtin.command: "{{ python_uv_bin }} self update"
   register: python_uv_update_result
-  changed_when: "'Updated' in python_uv_update_result.stderr"
+  changed_when: "'Upgraded' in python_uv_update_result.stderr or 'Updated' in python_uv_update_result.stderr"
   failed_when: false
+  tags:
+    - python-update
+    - update
+
+- name: Upgrade installed Python versions to the latest patch release
+  ansible.builtin.command: "{{ python_uv_bin }} python upgrade"
+  register: python_upgrade_result
+  changed_when: "'Upgraded' in python_upgrade_result.stderr or 'Installed' in python_upgrade_result.stderr"
   tags:
     - python-update
     - update

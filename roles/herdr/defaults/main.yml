@@ -1,0 +1,13 @@
+---
+# herdr role defaults. herdr is installed directly rather than through mise:
+# herdr disables its own updater for mise installs, and that updater
+# (`herdr update --handoff`) is what swaps the binary under running sessions.
+# This role therefore only installs herdr when it is missing.
+
+herdr_github_repo: herdrdev/herdr
+herdr_bin: "{{ local_bin }}/herdr"
+
+# Release asset naming: herdr-<os>-<arch>
+herdr_os: "{{ 'macos' if ansible_facts['os_family'] == 'Darwin' else 'linux' }}"
+herdr_arch: "{{ 'x86_64' if cpu_arch == 'x86_64' else 'aarch64' }}"
+herdr_asset: "herdr-{{ herdr_os }}-{{ herdr_arch }}"

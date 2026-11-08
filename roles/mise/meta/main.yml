@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Install mise and the GitHub-release tools it manages
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+        - resolute
+    - name: MacOSX
+      versions:
+        - all
+  galaxy_tags:
+    - mise
+    - tools
+
+dependencies: []

@@ -6,6 +6,7 @@
   register: i3blocks_installed
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - i3blocks
@@ -16,9 +17,13 @@
   ansible.builtin.git:
     repo: "{{ i3blocks_repo }}"
     dest: "{{ i3blocks_src_dir }}"
+    version: "{{ i3blocks_version }}"
     update: true
     force: false
   register: i3blocks_clone
+  until: i3blocks_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - i3blocks
@@ -55,6 +60,20 @@
     chdir: "{{ i3blocks_src_dir }}"
     target: install
   when: i3blocks_build.changed | default(false)
+  tags:
+    - install
+    - i3blocks
+    - i3blocks-update
+    - update
+
+# `make install` runs as root and may relink or touch files inside the
+# checkout, which would make the ownership check above fire on every run.
+- name: Restore ownership of the i3blocks source tree
+  become: true
+  ansible.builtin.command:
+    cmd: chown -R {{ user_name }}:{{ user_gid }} {{ i3blocks_src_dir }}
+  when: i3blocks_build.changed | default(false)
+  changed_when: false
   tags:
     - install
     - i3blocks

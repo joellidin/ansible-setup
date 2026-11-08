@@ -13,7 +13,7 @@
 - name: Change shell to zsh
   become: true
   ansible.builtin.user:
-    name: "{{ ansible_user_id }}"
+    name: "{{ user_name }}"
     shell: /usr/bin/zsh
   tags:
     - install
@@ -27,20 +27,28 @@
     - install
     - zsh
 
+# A plain clone is what the upstream installer does with --unattended; unlike
+# sh -c "$(curl ...)" it fails loudly when the download does, and it retries.
+# Oh-My-Zsh updates itself, so an existing checkout is left alone.
 - name: Install Oh-My-Zsh
-  ansible.builtin.shell: |
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" -s -- --unattended
-  environment:
-    ZSH: "{{ zsh_omz_path }}"
+  ansible.builtin.git:
+    repo: https://github.com/ohmyzsh/ohmyzsh.git
+    dest: "{{ zsh_omz_path }}"
+    version: master
+    depth: 1
+    update: false
   when: not zsh_omz_stat.stat.exists
-  changed_when: true
+  register: zsh_omz_clone
+  until: zsh_omz_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - zsh
 
 - name: Remove default .zshrc created by Oh-My-Zsh
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.zshrc"
+    path: "{{ home_dir }}/.zshrc"
     state: absent
   tags:
     - install
@@ -50,7 +58,12 @@
   ansible.builtin.git:
     repo: https://github.com/zsh-users/zsh-autosuggestions.git
     dest: "{{ zsh_omz_path }}/custom/plugins/zsh-autosuggestions"
+    version: master
     update: true
+  register: zsh_autosuggestions_clone
+  until: zsh_autosuggestions_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - zsh
@@ -59,7 +72,12 @@
   ansible.builtin.git:
     repo: https://github.com/joshskidmore/zsh-fzf-history-search.git
     dest: "{{ zsh_omz_path }}/custom/plugins/zsh-fzf-history-search"
+    version: master
     update: true
+  register: zsh_fzf_history_search_clone
+  until: zsh_fzf_history_search_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - zsh
@@ -68,7 +86,12 @@
   ansible.builtin.git:
     repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
     dest: "{{ zsh_omz_path }}/custom/plugins/zsh-syntax-highlighting"
+    version: master
     update: true
+  register: zsh_syntax_highlighting_clone
+  until: zsh_syntax_highlighting_clone is succeeded
+  retries: 3
+  delay: 10
   tags:
     - install
     - zsh
@@ -78,6 +101,7 @@
   register: zsh_starship_check
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - zsh
@@ -96,10 +120,15 @@
 
 - name: Download Starship installer
   ansible.builtin.get_url:
+    timeout: 60
     url: https://starship.rs/install.sh
     dest: "{{ zsh_starship_installer }}"
     mode: "0755"
   when: zsh_starship_check.rc != 0
+  register: zsh_starship_download
+  until: zsh_starship_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - zsh
@@ -109,6 +138,10 @@
   ansible.builtin.command: "{{ zsh_starship_installer }} -y -b {{ zsh_starship_bin_dir }}"
   when: zsh_starship_check.rc != 0
   changed_when: true
+  register: zsh_starship_install
+  until: zsh_starship_install.rc == 0
+  retries: 3
+  delay: 10
   tags:
     - install
     - zsh

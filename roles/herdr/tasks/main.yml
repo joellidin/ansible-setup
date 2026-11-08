@@ -1,0 +1,62 @@
+---
+# herdr role - installs the latest herdr release once; herdr updates itself
+# afterwards with `herdr update --handoff`.
+
+- name: Check if herdr is installed
+  ansible.builtin.stat:
+    path: "{{ herdr_bin }}"
+  register: herdr_installed
+  check_mode: false
+  tags:
+    - install
+    - herdr
+
+- name: Install herdr
+  when: not herdr_installed.stat.exists
+  tags:
+    - install
+    - herdr
+  block:
+    - name: Get latest herdr release info
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/{{ herdr_github_repo }}/releases/latest"
+        return_content: true
+        headers: "{{ github_api_headers }}"
+        timeout: 60
+      register: herdr_release
+      until: herdr_release is succeeded
+      retries: 5
+      delay: 10
+      check_mode: false
+
+    - name: Select the herdr binary for this platform
+      ansible.builtin.set_fact:
+        herdr_release_asset: >-
+          {{ herdr_release.json.assets
+             | selectattr('name', 'equalto', herdr_asset)
+             | list }}
+
+    - name: Verify the herdr release has {{ herdr_asset }}
+      ansible.builtin.assert:
+        that:
+          - herdr_release_asset | length == 1
+        fail_msg: "herdr {{ herdr_release.json.tag_name }} has no {{ herdr_asset }} asset"
+        quiet: true
+
+    - name: Ensure local bin directory exists
+      ansible.builtin.file:
+        path: "{{ herdr_bin | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download herdr
+      ansible.builtin.get_url:
+        url: "{{ herdr_release_asset[0].browser_download_url }}"
+        dest: "{{ herdr_bin }}"
+        checksum: "{{ herdr_release_asset[0].digest }}"
+        mode: "0755"
+        timeout: 60
+      register: herdr_download
+      until: herdr_download is succeeded
+      retries: 3
+      delay: 5

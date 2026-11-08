@@ -2,30 +2,28 @@
 - name: Bootstrap development environment
   hosts: localhost
   connection: local
-  vars:
-    src_gh_hosts: "./hosts.yml"
-    src_gh_config: "./encrypt-data/config.yml"
   pre_tasks:
     - name: Run preflight checks
       ansible.builtin.import_tasks: tasks/preflight.yml
-    - name: Update Apt
+    - name: Update apt cache and install the deb822 repository prerequisite
       become: true
       ansible.builtin.apt:
-        force_apt_get: true
-        update_cache: true
+        name: python3-debian
         state: present
+        update_cache: true
+      when: ansible_facts['os_family'] == 'Debian'
       tags:
-        - install
-        - core
+        - always
   environment:
-    XDG_CONFIG_HOME: "{{ ansible_env.HOME }}/.config"
-    XDG_DATA_HOME: "{{ ansible_env.HOME }}/.local/share"
-    XDG_CACHE_HOME: "{{ ansible_env.HOME }}/.cache"
-    XDG_STATE_HOME: "{{ ansible_env.HOME }}/.local/state"
-    CARGO_HOME: "{{ cargo_home | default(ansible_env.HOME + '/.local/share/cargo') }}"
-    RUSTUP_HOME: "{{ rustup_home | default(ansible_env.HOME + '/.local/share/rustup') }}"
-    N_PREFIX: "{{ n_prefix | default(ansible_env.HOME + '/.local/share/n') }}"
-    NPM_CONFIG_USERCONFIG: "{{ npm_config_userconfig | default(ansible_env.HOME + '/.config/npm/npmrc') }}"
+    XDG_CONFIG_HOME: "{{ config_home }}"
+    XDG_DATA_HOME: "{{ local_share }}"
+    XDG_CACHE_HOME: "{{ cache_home }}"
+    XDG_STATE_HOME: "{{ local_state }}"
+    CARGO_HOME: "{{ cargo_home }}"
+    RUSTUP_HOME: "{{ rustup_home }}"
+  # Role tags select whole roles (`--tags neovim`). Tasks that belong to the
+  # update flow carry `update` and `<role>-update` themselves, so
+  # `--tags update` runs only those.
   roles:
     - role: docker
       tags:
@@ -43,122 +41,72 @@
       tags:
         - install
         - gpg
-    - role: regolith
+    - role: mise
       tags:
         - install
-        - regolith
+        - mise
     - role: rust
       tags:
         - install
         - rust
-        - rust-update
-        - update
     - role: python
       tags:
         - install
         - python
-        - python-update
-        - update
-    - role: go
-      tags:
-        - install
-        - go
-        - go-update
-        - update
-    - role: node
-      tags:
-        - install
-        - node
-        - node-update
-        - update
-    - role: zig
-      tags:
-        - install
-        - zig
-        - zig-update
-        - update
     - role: neovim
       tags:
         - install
         - neovim
-        - neovim-update
-        - update
     - role: tmux
       tags:
         - install
         - tmux
-        - tmux-update
-        - update
-    - role: gh
-      vars:
-        gh_config_src: "{{ src_gh_config }}"
-        gh_hosts_src: "{{ src_gh_hosts }}"
-      tags:
-        - install
-        - gh
     - role: i3blocks
       tags:
         - install
         - i3blocks
-        - i3blocks-update
-        - update
     - role: zsh
       tags:
         - install
         - zsh
-    - role: kubectl
-      tags:
-        - install
-        - kubectl
-    - role: vault
-      tags:
-        - install
-        - vault
     - role: gopass
-      vars:
-        gopass_store_repo: "https://github.com/joellidin/private-pass.git"
       tags:
         - install
         - gopass
-        - gopass-update
-        - update
     - role: browser
       tags:
         - install
         - browser
-        - zen-update
-        - update
     - role: ghostty
       tags:
         - install
         - ghostty
-        - ghostty-update
-        - update
     - role: picom
       tags:
         - install
         - picom
-        - picom-update
-        - update
+    - role: i3lock_color
+      tags:
+        - install
+        - i3lock_color
+    - role: desktop
+      tags:
+        - install
+        - desktop
     - role: claude_code
       tags:
         - install
         - claude-code
-        - claude-code-update
-        - update
-  tasks:
-    - name: Setup productivity tools
-      ansible.builtin.import_tasks: tasks/productivity-tools.yml
-    - name: Clone repositories in parallel
-      ansible.builtin.import_tasks: tasks/parallel-clones.yml
+    - role: herdr
+      tags:
+        - install
+        - herdr
   post_tasks:
-    - name: Upgrade Apt
+    - name: Upgrade apt packages
       become: true
       ansible.builtin.apt:
-        force_apt_get: true
-        update_cache: true
-        upgrade: true
-        state: present
+        upgrade: safe
+      when: ansible_facts['os_family'] == 'Debian'
       tags:
         - install
         - core
