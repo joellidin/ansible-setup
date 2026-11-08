@@ -1,0 +1,30 @@
+---
+# Desktop role defaults: the i3/X11 desktop packages and the git-core PPA.
+
+# Launchpad PPA for current git releases. files/git-core-ppa.asc is its
+# signing key; this fingerprint (from
+# https://launchpad.net/api/1.0/~git-core/+archive/ubuntu/ppa) is the one to
+# check it against if the key ever needs replacing:
+#   gpg --show-keys roles/desktop/files/git-core-ppa.asc
+desktop_git_ppa_fingerprint: F911AB184317630C59970973E363C90F8F1B6217
+
+desktop_packages:
+  - i3
+  - rofi
+  - xcape
+  - xdotool
+  - xclip
+  - xwallpaper
+  - unclutter
+  - maim
+  - ffmpeg
+  - imagemagick
+  - acpi
+  - jq
+  - fzf
+  - ripgrep
+  - fd-find
+  - plocate
+  - sqlite3
+  - libsqlite3-dev
+  - git

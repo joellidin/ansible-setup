@@ -3,7 +3,7 @@ collections/
 
 # Ansible cache and temp files
 *.retry
-/tmp/ansible_facts_cache/
+.ansible/
 
 # Python
 __pycache__/

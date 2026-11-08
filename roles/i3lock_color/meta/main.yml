@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Build i3lock-color from source and install betterlockscreen
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+        - resolute
+  galaxy_tags:
+    - i3lock
+    - lockscreen
+    - i3
+
+dependencies: []

@@ -1,0 +1,60 @@
+---
+# i3lock_color role defaults
+
+# i3lock-color: fork of i3lock with colour and unlock-indicator options
+i3lock_color_repo: https://github.com/Raymo111/i3lock-color.git
+i3lock_color_version: master
+i3lock_color_src_dir: "{{ local_src }}/i3lock-color"
+
+# Installed beside, not over, the Ubuntu `i3lock` package (/usr/bin/i3lock).
+# betterlockscreen looks for an `i3lock-color` binary before falling back to i3lock.
+i3lock_color_bin: /usr/local/bin/i3lock-color
+
+# Upstream's Ubuntu list plus automake, which autoreconf needs for Makefile.am
+# (it is only a Recommends of autoconf).
+i3lock_color_build_deps:
+  - autoconf
+  - automake
+  - gcc
+  - make
+  - pkg-config
+  - libpam0g-dev
+  - libcairo2-dev
+  - libfontconfig1-dev
+  - libxcb-composite0-dev
+  - libev-dev
+  - libx11-xcb-dev
+  - libxcb-xkb-dev
+  - libxcb-xinerama0-dev
+  - libxcb-randr0-dev
+  - libxcb-image0-dev
+  - libxcb-util-dev
+  - libxcb-xrm-dev
+  - libxkbcommon-dev
+  - libxkbcommon-x11-dev
+  - libjpeg-dev
+  - libgif-dev
+
+# betterlockscreen: lock-screen wrapper around i3lock-color
+i3lock_color_betterlockscreen_repo: betterlockscreen/betterlockscreen
+
+# "latest" resolves the newest GitHub release; pin a tag such as "v4.4.0" to freeze.
+i3lock_color_betterlockscreen_version: latest
+
+# Releases ship no assets (and the script's embedded VERSION lags the tag), so the
+# script is fetched from the tagged tree and the installed tag is kept in a marker
+# file. Set a "sha256:<hex>" checksum to verify a pinned version.
+i3lock_color_betterlockscreen_checksum: ""
+i3lock_color_betterlockscreen_src_dir: "{{ local_src }}/betterlockscreen"
+i3lock_color_betterlockscreen_marker: "{{ i3lock_color_betterlockscreen_src_dir }}/.ansible-installed-tag"
+i3lock_color_betterlockscreen_bin: /usr/local/bin/betterlockscreen
+
+# imagemagick provides `convert` (ImageMagick 7 on 26.04; there is no -6.q16 package).
+# x11-xserver-utils (xset, xrandr, xrdb) and x11-utils (xdpyinfo) are called by the
+# script. The wallpaper is set with xwallpaper from the dotfiles, so feh is not needed.
+i3lock_color_betterlockscreen_packages:
+  - xss-lock
+  - imagemagick
+  - bc
+  - x11-xserver-utils
+  - x11-utils

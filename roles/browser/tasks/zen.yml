@@ -1,10 +1,11 @@
 ---
-# Zen browser installation from tarball
+# Zen browser installation from the GitHub release tarball
 
 - name: Check if Zen browser is installed
   ansible.builtin.stat:
     path: "{{ browser_zen_install_dir }}/zen"
   register: browser_zen_installed
+  check_mode: false
 
 - name: Check Zen browser version
   ansible.builtin.command: "{{ browser_zen_install_dir }}/zen --version"
@@ -12,33 +13,78 @@
   changed_when: false
   failed_when: false
   when: browser_zen_installed.stat.exists
+  check_mode: false
+
+- name: Get Zen browser release info
+  ansible.builtin.uri:
+    timeout: 60
+    url: >-
+      https://api.github.com/repos/{{ browser_zen_github_repo }}/releases/{{
+      'latest' if browser_zen_version == 'latest' else 'tags/' ~ browser_zen_version }}
+    return_content: true
+    headers: "{{ github_api_headers }}"
+  register: browser_zen_release
+  check_mode: false
+  until: browser_zen_release is succeeded
+  retries: 5
+  delay: 10
+
+
+- name: Select the Zen browser tarball for this architecture
+  ansible.builtin.set_fact:
+    browser_zen_target_version: "{{ browser_zen_release.json.tag_name }}"
+    browser_zen_tarball: >-
+      {{ browser_zen_release.json.assets
+         | selectattr('name', 'equalto', browser_zen_asset)
+         | list }}
+
+- name: Verify the Zen browser release has {{ browser_zen_asset }}
+  ansible.builtin.assert:
+    that:
+      - browser_zen_tarball | length == 1
+    fail_msg: "Zen {{ browser_zen_target_version }} has no {{ browser_zen_asset }} asset"
+    quiet: true
+
+- name: Determine if Zen browser needs install or update
+  ansible.builtin.set_fact:
+    browser_zen_needs_install: >-
+      {{ not browser_zen_installed.stat.exists
+         or browser_zen_target_version not in (browser_zen_version_check.stdout | default('')) }}
 
 - name: Download Zen browser tarball
   ansible.builtin.get_url:
-    url: "{{ browser_zen_download_url }}"
-    dest: "/tmp/zen.linux-x86_64.tar.xz"
-    checksum: "sha256:{{ browser_zen_checksum }}"
+    timeout: 60
+    url: "{{ browser_zen_tarball[0].browser_download_url }}"
+    dest: "{{ browser_zen_download_dir }}/{{ browser_zen_asset }}"
+    checksum: "{{ browser_zen_tarball[0].digest }}"
     mode: "0644"
-  when: >
-    not browser_zen_installed.stat.exists or
-    browser_zen_version not in (browser_zen_version_check.stdout | default(''))
-  register: browser_zen_downloaded
+  when: browser_zen_needs_install
+  register: browser_zen_download
+  until: browser_zen_download is succeeded
+  retries: 3
+  delay: 5
+
 
 - name: Create Zen browser directory
   ansible.builtin.file:
     path: "{{ browser_zen_install_dir }}"
     state: directory
     mode: "0755"
-  when: browser_zen_downloaded.changed
 
 - name: Extract Zen browser tarball
   ansible.builtin.unarchive:
-    src: "/tmp/zen.linux-x86_64.tar.xz"
+    src: "{{ browser_zen_download_dir }}/{{ browser_zen_asset }}"
     dest: "{{ browser_zen_install_dir }}"
     remote_src: true
     extra_opts:
       - --strip-components=1
-  when: browser_zen_downloaded.changed
+  when: browser_zen_needs_install
+
+- name: Clean up Zen browser tarball
+  ansible.builtin.file:
+    path: "{{ browser_zen_download_dir }}/{{ browser_zen_asset }}"
+    state: absent
+  when: browser_zen_needs_install
 
 - name: Create Zen browser symlink
   ansible.builtin.file:
@@ -68,9 +114,3 @@
       MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;
       StartupNotify=true
       StartupWMClass=zen
-
-- name: Clean up Zen browser tarball
-  ansible.builtin.file:
-    path: "/tmp/zen.linux-x86_64.tar.xz"
-    state: absent
-  when: browser_zen_downloaded.changed

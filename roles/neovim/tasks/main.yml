@@ -6,6 +6,7 @@
   register: neovim_installed
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - neovim
@@ -32,6 +33,9 @@
         update: true
         force: true
       register: neovim_clone
+      until: neovim_clone is succeeded
+      retries: 3
+      delay: 10
 
     # A build that once ran as root leaves root-owned files in build/ and .deps/,
     # after which the unprivileged build step cannot write there. Hand the tree
@@ -40,7 +44,7 @@
       ansible.builtin.command:
         cmd: >-
           find {{ neovim_src_dir }} -path {{ neovim_src_dir }}/.git -prune
-          -o -not -user {{ ansible_user_id }} -print -quit
+          -o -not -user {{ user_name }} -print -quit
       register: neovim_foreign_files
       changed_when: false
       check_mode: false
@@ -48,7 +52,7 @@
     - name: Take ownership of the source tree
       become: true
       ansible.builtin.command:
-        cmd: chown -R {{ ansible_user_id }}:{{ ansible_user_gid }} {{ neovim_src_dir }}
+        cmd: chown -R {{ user_name }}:{{ user_gid }} {{ neovim_src_dir }}
       when: neovim_foreign_files.stdout | default('') | length > 0
       changed_when: true
 
@@ -62,6 +66,8 @@
       failed_when: false
       check_mode: false
 
+    # The build downloads its bundled dependencies (tree-sitter grammars,
+    # luajit, libuv) from GitHub. A retried make only fetches what is missing.
     - name: Build Neovim
       community.general.make:
         chdir: "{{ neovim_src_dir }}"
@@ -72,6 +78,9 @@
         or neovim_installed.rc != 0
         or (neovim_installed_commit.stdout | default('')) != neovim_clone.after
       register: neovim_build
+      until: neovim_build is succeeded
+      retries: 2
+      delay: 30
 
     # `cmake --install` only copies the already-built files. `make install`
     # would first re-run the build as root and litter build/ with root-owned
@@ -88,8 +97,8 @@
       become: true
       ansible.builtin.file:
         path: "{{ neovim_src_dir }}/build/install_manifest.txt"
-        owner: "{{ ansible_user_id }}"
-        group: "{{ ansible_user_gid }}"
+        owner: "{{ user_name }}"
+        group: "{{ user_gid }}"
       when: neovim_build.changed | default(false)
 
     - name: Record the installed Neovim commit
@@ -120,6 +129,7 @@
   register: neovim_stylua_check
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - neovim
@@ -127,8 +137,8 @@
 - name: Install StyLua
   ansible.builtin.shell: ". {{ neovim_cargo_home }}/env && cargo install stylua"
   environment:
-    TMPDIR: "{{ ansible_env.HOME }}/.cache"
-    CARGO_TARGET_DIR: "{{ ansible_env.HOME }}/.cache/cargo-target"
+    TMPDIR: "{{ home_dir }}/.cache"
+    CARGO_TARGET_DIR: "{{ home_dir }}/.cache/cargo-target"
   when: neovim_stylua_check.rc != 0
   changed_when: true
   tags:

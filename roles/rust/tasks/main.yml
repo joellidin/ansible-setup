@@ -4,17 +4,18 @@
 - name: Check if cargo is installed
   ansible.builtin.command: which cargo
   environment:
-    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_facts['env']['PATH'] }}"
   register: rust_cargo_check
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - install
     - rust
 
 - name: Create cache directory for rustup installer
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.cache"
+    path: "{{ home_dir }}/.cache"
     state: directory
     mode: "0755"
   when: rust_cargo_check.rc != 0
@@ -24,23 +25,32 @@
 
 - name: Download rustup installer
   ansible.builtin.get_url:
+    timeout: 60
     url: https://sh.rustup.rs
-    dest: "{{ ansible_env.HOME }}/.cache/rustup-init.sh"
+    dest: "{{ home_dir }}/.cache/rustup-init.sh"
     mode: "0755"
     force: true
   when: rust_cargo_check.rc != 0
+  register: rust_installer_download
+  until: rust_installer_download is succeeded
+  retries: 3
+  delay: 5
   tags:
     - install
     - rust
 
 - name: Install Rust via rustup
-  ansible.builtin.command: "{{ ansible_env.HOME }}/.cache/rustup-init.sh -y"
+  ansible.builtin.command: "{{ home_dir }}/.cache/rustup-init.sh -y"
   environment:
     CARGO_HOME: "{{ rust_cargo_home }}"
     RUSTUP_HOME: "{{ rust_rustup_home }}"
-    TMPDIR: "{{ ansible_env.HOME }}/.cache"
+    TMPDIR: "{{ home_dir }}/.cache"
   when: rust_cargo_check.rc != 0
   changed_when: true
+  register: rust_install
+  until: rust_install.rc == 0
+  retries: 3
+  delay: 10
   tags:
     - install
     - rust
@@ -50,7 +60,7 @@
   environment:
     CARGO_HOME: "{{ rust_cargo_home }}"
     RUSTUP_HOME: "{{ rust_rustup_home }}"
-    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_facts['env']['PATH'] }}"
   register: rust_toolchain_result
   changed_when: "'unchanged' not in rust_toolchain_result.stdout"
   tags:
@@ -64,16 +74,19 @@
   environment:
     CARGO_HOME: "{{ rust_cargo_home }}"
     RUSTUP_HOME: "{{ rust_rustup_home }}"
-    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_env.PATH }}"
+    PATH: "{{ rust_cargo_home }}/bin:{{ ansible_facts['env']['PATH'] }}"
   register: rust_update_result
   changed_when: "'Updated' in rust_update_result.stdout"
+  until: rust_update_result.rc == 0
+  retries: 2
+  delay: 10
   tags:
     - rust-update
     - update
 
 - name: Clean up rustup installer
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/.cache/rustup-init.sh"
+    path: "{{ home_dir }}/.cache/rustup-init.sh"
     state: absent
   tags:
     - install

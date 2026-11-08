@@ -4,6 +4,6 @@
 - name: Docker group changed
   ansible.builtin.debug:
     msg: |
-      User {{ ansible_user_id }} has been added to the docker group.
+      User {{ user_name }} has been added to the docker group.
       You will need to log out and back in for this to take effect,
       or run: newgrp docker

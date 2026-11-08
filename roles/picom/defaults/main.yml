@@ -6,8 +6,8 @@ picom_repo: https://github.com/yshui/picom.git
 picom_version: v13
 
 # Installation paths
-picom_src_dir: "{{ ansible_env.HOME }}/.local/src/picom"
-picom_prefix: "{{ ansible_env.HOME }}/.local"
+picom_src_dir: "{{ home_dir }}/.local/src/picom"
+picom_prefix: "{{ home_dir }}/.local"
 
 # Build dependencies
 picom_build_deps:

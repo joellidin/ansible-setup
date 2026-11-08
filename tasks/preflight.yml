@@ -17,7 +17,7 @@
     that: item.size_available > 5368709120
     fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ gb_available }}GB)"
     success_msg: "Disk space OK: {{ gb_available }}GB available on {{ item.mount }}"
-  loop: "{{ ansible_mounts | selectattr('mount', 'equalto', '/') | list }}"
+  loop: "{{ ansible_facts['mounts'] | selectattr('mount', 'equalto', '/') | list }}"
   tags:
     - always
     - preflight
@@ -29,8 +29,8 @@
     that: item.size_available > 5368709120
     fail_msg: "Insufficient disk space on {{ item.mount }} (need 5GB free, have {{ gb_available }}GB)"
     success_msg: "Disk space OK: {{ gb_available }}GB available on {{ item.mount }}"
-  loop: "{{ ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list }}"
-  when: ansible_mounts | selectattr('mount', 'equalto', ansible_env.HOME) | list | length > 0
+  loop: "{{ ansible_facts['mounts'] | selectattr('mount', 'equalto', home_dir) | list }}"
+  when: ansible_facts['mounts'] | selectattr('mount', 'equalto', home_dir) | list | length > 0
   tags:
     - always
     - preflight
@@ -75,9 +75,9 @@
 
 - name: Check if running as root
   ansible.builtin.assert:
-    that: ansible_user_id != 'root'
+    that: user_name != 'root'
     fail_msg: "This playbook should not be run as root. Run as a regular user with sudo privileges."
-    success_msg: "Running as user {{ ansible_user_id }}"
+    success_msg: "Running as user {{ user_name }}"
   tags:
     - always
     - preflight
@@ -87,6 +87,7 @@
   register: sudo_check
   changed_when: false
   failed_when: false
+  check_mode: false
   tags:
     - always
     - preflight
@@ -102,11 +103,11 @@
 - name: Display system information
   ansible.builtin.debug:
     msg: |
-      System: {{ ansible_distribution }} {{ ansible_distribution_version }}
-      Kernel: {{ ansible_kernel }}
-      Architecture: {{ ansible_architecture }}
-      User: {{ ansible_user_id }}
-      Home: {{ ansible_env.HOME }}
+      System: {{ ansible_facts['distribution'] }} {{ distro_version }}
+      Kernel: {{ ansible_facts['kernel'] }}
+      Architecture: {{ cpu_arch }}
+      User: {{ user_name }}
+      Home: {{ home_dir }}
   tags:
     - always
     - preflight

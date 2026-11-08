@@ -5,8 +5,8 @@ profile: production
 exclude_paths:
   - .cache/
   - .git/
-  - hosts.yml  # Encrypted vault file
-  - encrypt-data/
+  - collections/
+  - .ansible/
 
 # Skip rules that don't apply to this project
 skip_list:

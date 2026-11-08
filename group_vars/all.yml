@@ -6,14 +6,27 @@
 # Update versions in this single file rather than across multiple task files.
 
 # -----------------------------------------------------------------------------
+# Facts
+# -----------------------------------------------------------------------------
+# Facts are read through ansible_facts[] (inject_facts_as_vars is off).
+
+# The play-level environment block is rendered before facts exist, so HOME
+# falls back to the controller's environment (the play runs locally anyway).
+home_dir: "{{ (ansible_facts['env'] | default({}))['HOME'] | default(lookup('env', 'HOME')) }}"
+user_name: "{{ ansible_facts['user_id'] }}"
+user_gid: "{{ ansible_facts['user_gid'] }}"
+cpu_arch: "{{ ansible_facts['architecture'] }}"
+deb_arch: "{{ 'amd64' if cpu_arch == 'x86_64' else 'arm64' }}"
+distro_release: "{{ ansible_facts['distribution_release'] }}"
+distro_version: "{{ ansible_facts['distribution_version'] }}"
+
+# -----------------------------------------------------------------------------
 # Tool Versions
 # -----------------------------------------------------------------------------
-# Keeping versions centralized makes upgrades straightforward and auditable.
-
-go_version: latest  # newest stable from go.dev; pin e.g. "1.27.3" to freeze
-kubectl_version: "v1.31"
-gopass_version: "1.16.1"
-node_version: "20"
+# GitHub-release tools (go, node, zig, delta, gh, kubectl, vault, gopass)
+# are versioned by mise in ~/.config/mise/config.toml and mise.lock.
+# herdr and Claude Code install once and then update themselves.
+# Source builds track their repositories (see Git Repositories below).
 
 # -----------------------------------------------------------------------------
 # XDG Base Directory Paths
@@ -21,12 +34,12 @@ node_version: "20"
 # Following XDG Base Directory Specification for clean home directory.
 # Reference: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
-local_bin: "{{ ansible_env.HOME }}/.local/bin"
-local_src: "{{ ansible_env.HOME }}/.local/src"
-local_share: "{{ ansible_env.HOME }}/.local/share"
-local_state: "{{ ansible_env.HOME }}/.local/state"
-config_home: "{{ ansible_env.HOME }}/.config"
-cache_home: "{{ ansible_env.HOME }}/.cache"
+local_bin: "{{ home_dir }}/.local/bin"
+local_src: "{{ home_dir }}/.local/src"
+local_share: "{{ home_dir }}/.local/share"
+local_state: "{{ home_dir }}/.local/state"
+config_home: "{{ home_dir }}/.config"
+cache_home: "{{ home_dir }}/.cache"
 
 # -----------------------------------------------------------------------------
 # Language-Specific Paths
@@ -36,20 +49,16 @@ cache_home: "{{ ansible_env.HOME }}/.cache"
 cargo_home: "{{ local_share }}/cargo"
 rustup_home: "{{ local_share }}/rustup"
 
-# Node.js
-n_prefix: "{{ local_share }}/n"
-npm_config_userconfig: "{{ config_home }}/npm/npmrc"
-npm_cache: "{{ cache_home }}/npm"
-
-# Go (system-wide installation)
-go_install_path: "/usr/local/go"
+# mise (tool versions)
+mise_data_dir: "{{ local_share }}/mise"
+mise_shims_dir: "{{ mise_data_dir }}/shims"
 
 # -----------------------------------------------------------------------------
 # Application Paths
 # -----------------------------------------------------------------------------
 
 oh_my_zsh_path: "{{ local_src }}/oh-my-zsh"
-dotfiles_path: "{{ ansible_env.HOME }}/.dotfiles"
+dotfiles_path: "{{ home_dir }}/.dotfiles"
 nvim_data_path: "{{ local_share }}/nvim"
 gopass_store_path: "{{ local_share }}/gopass/stores/root"
 
@@ -65,20 +74,14 @@ i3blocks_repo: "https://github.com/vivien/i3blocks"
 gopass_store_repo: "https://github.com/joellidin/private-pass.git"
 
 # -----------------------------------------------------------------------------
-# Download URLs
+# GitHub API
 # -----------------------------------------------------------------------------
+# Release lookups go through api.github.com. Unauthenticated calls are rate
+# limited per IP (CI runners hit this); when GITHUB_TOKEN is set in the
+# environment it is sent along. mise reads the same variable itself.
 
-gopass_download_url: >-
-  https://github.com/gopasspw/gopass/releases/download/v{{ gopass_version
-  }}/gopass-{{ gopass_version }}-linux-amd64.tar.gz
-
-# -----------------------------------------------------------------------------
-# Checksums (SHA256)
-# -----------------------------------------------------------------------------
-# Verify downloads to prevent tampering. Update these when changing versions.
-# Get checksums from official release pages.
-
-# Go: checksums come from the go.dev release feed; set go_checksum only to override.
+github_token: "{{ lookup('env', 'GITHUB_TOKEN') | default('', true) }}"
+github_api_headers: "{{ {'Authorization': 'Bearer ' ~ github_token} if github_token | length > 0 else {} }}"
 
 # -----------------------------------------------------------------------------
 # Application Choices

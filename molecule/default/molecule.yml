@@ -9,8 +9,8 @@ driver:
   name: docker
 
 platforms:
-  - name: ubuntu-noble
-    image: ubuntu:noble
+  - name: ubuntu-resolute
+    image: ubuntu:resolute
     pre_build_image: false
     dockerfile: Dockerfile.j2
     privileged: true
@@ -29,13 +29,14 @@ provisioner:
     verify: verify.yml
   inventory:
     host_vars:
-      ubuntu-noble:
+      ubuntu-resolute:
         ansible_user: testuser
   options:
     skip-tags: gpg
   config_options:
     defaults:
-      callbacks_enabled: profile_tasks
+      callbacks_enabled: ansible.posix.profile_tasks
+      inject_facts_as_vars: false
       stdout_callback: default
       callback_result_format: yaml
       roles_path: ../../roles

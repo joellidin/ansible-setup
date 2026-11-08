@@ -36,7 +36,7 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          MOLECULE_DISTRO: ubuntu:noble
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   syntax-check:
     name: Syntax Check
@@ -53,11 +53,11 @@ jobs:
 
       - name: Install Ansible collections
         run: |
-          uvx --from ansible-core ansible-galaxy collection install community.general
+          uvx --from 'ansible-core>=2.22,<2.23' ansible-galaxy collection install -r requirements.yml -p collections
 
       - name: Run syntax check
         run: |
-          uvx --from ansible-core ansible-playbook -i localhost, local.yml --syntax-check
+          uvx --from 'ansible-core>=2.22,<2.23' ansible-playbook local.yml --syntax-check
 
   idempotence-check:
     name: Idempotence Check
@@ -81,3 +81,4 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,6 +3,10 @@
   hosts: all
   gather_facts: true
 
+  vars:
+    home_dir: "{{ ansible_facts['env']['HOME'] }}"
+    user_name: "{{ ansible_facts['user_id'] }}"
+
   tasks:
     # Verify ZSH installation
     - name: Check zsh is installed
@@ -18,7 +22,7 @@
         success_msg: "ZSH is installed at {{ zsh_check.stdout }}"
 
     - name: Check user shell is zsh
-      ansible.builtin.command: getent passwd {{ ansible_user_id }}
+      ansible.builtin.command: getent passwd {{ user_name }}
       register: user_shell
       changed_when: false
 
@@ -32,7 +36,7 @@
     # Verify oh-my-zsh
     - name: Check oh-my-zsh directory exists
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/src/oh-my-zsh"
+        path: "{{ home_dir }}/.local/src/oh-my-zsh"
       register: omz_dir
 
     - name: Verify oh-my-zsh installation
@@ -58,7 +62,7 @@
         success_msg: "Docker is installed at {{ docker_check.stdout }}"
 
     - name: Check user is in docker group
-      ansible.builtin.command: groups {{ ansible_user_id }}
+      ansible.builtin.command: groups {{ user_name }}
       register: user_groups
       changed_when: false
 
@@ -69,38 +73,36 @@
         fail_msg: "User is not in docker group"
         success_msg: "User is in docker group"
 
-    # Verify kubectl
-    - name: Check kubectl is installed
-      ansible.builtin.command: which kubectl
-      register: kubectl_check
+    # Verify mise-managed tools
+    - name: Check mise-managed tools resolve through the shims
+      ansible.builtin.command: "{{ home_dir }}/.local/share/mise/shims/{{ item.name }} {{ item.args }}"
+      loop:
+        - { name: go, args: version }
+        - { name: node, args: --version }
+        - { name: delta, args: --version }
+        - { name: gh, args: --version }
+        - { name: kubectl, args: version --client }
+        - { name: vault, args: --version }
+        - { name: gopass, args: --version }
+      loop_control:
+        label: "{{ item.name }}"
+      register: mise_tool_check
       changed_when: false
       failed_when: false
 
-    - name: Verify kubectl installation
+    - name: Verify mise-managed tools
       ansible.builtin.assert:
         that:
-          - kubectl_check.rc == 0
-        fail_msg: "kubectl is not installed"
-        success_msg: "kubectl is installed at {{ kubectl_check.stdout }}"
-
-    # Verify Vault
-    - name: Check vault is installed
-      ansible.builtin.command: which vault
-      register: vault_check
-      changed_when: false
-      failed_when: false
-
-    - name: Verify vault installation
-      ansible.builtin.assert:
-        that:
-          - vault_check.rc == 0
-        fail_msg: "Vault is not installed"
-        success_msg: "Vault is installed at {{ vault_check.stdout }}"
+          - mise_tool_check.results | rejectattr('rc', 'equalto', 0) | list | length == 0
+        fail_msg: >-
+          Missing mise tools: {{ mise_tool_check.results
+          | rejectattr('rc', 'equalto', 0) | map(attribute='item.name') | list }}
+        success_msg: "All mise-managed tools are installed"
 
     # Verify Zen browser
     - name: Check zen browser is installed
       ansible.builtin.stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/zen"
+        path: "{{ home_dir }}/.local/bin/zen"
       register: zen_check
 
     - name: Verify zen installation
@@ -110,21 +112,10 @@
         fail_msg: "Zen browser is not installed"
         success_msg: "Zen browser is installed"
 
-    # Verify GitHub CLI (skipped in test - requires encrypted files)
-    - name: Check gh is installed
-      ansible.builtin.command: which gh
-      register: gh_check
-      changed_when: false
-      failed_when: false
-
-    - name: Verify gh installation
-      ansible.builtin.debug:
-        msg: "GitHub CLI check skipped in test environment (requires encrypted files)"
-
     # Verify APT repositories are configured
     - name: Check Docker repository exists
       ansible.builtin.stat:
-        path: /etc/apt/sources.list.d/docker.list
+        path: /etc/apt/sources.list.d/docker.sources
       register: docker_repo
 
     - name: Verify Docker repository
@@ -135,6 +126,10 @@
         success_msg: "Docker APT repository is configured"
 
     # Summary
+    - name: Summarise mise tool results
+      ansible.builtin.set_fact:
+        mise_tools_ok: "{{ mise_tool_check.results | rejectattr('rc', 'equalto', 0) | list | length == 0 }}"
+
     - name: Display verification summary
       ansible.builtin.debug:
         msg: |
@@ -142,7 +137,5 @@
           - ZSH: {{ 'OK' if zsh_check.rc == 0 else 'FAILED' }}
           - Oh-My-Zsh: {{ 'OK' if omz_dir.stat.exists else 'FAILED' }}
           - Docker: {{ 'OK' if docker_check.rc == 0 else 'FAILED' }}
-          - kubectl: {{ 'OK' if kubectl_check.rc == 0 else 'FAILED' }}
-          - Vault: {{ 'OK' if vault_check.rc == 0 else 'FAILED' }}
+          - mise tools: {{ 'OK' if mise_tools_ok else 'FAILED' }}
           - Zen: {{ 'OK' if zen_check.stat.exists else 'FAILED' }}
-          - GitHub CLI: SKIPPED (requires encrypted files)

@@ -1,8 +1,9 @@
 ---
 # GPG role default variables
 
-# GPG public key file source (relative to playbook)
-gpg_public_key_src: "./encrypt-data/pub.key"
+# Public key is fetched from GitHub, where it is published for commit verification.
+gpg_public_key_url: "https://github.com/joellidin.gpg"
+gpg_public_key_file: "{{ cache_home }}/joellidin.gpg.asc"
 
 # GPG key fingerprint for trust
 gpg_key_fingerprint: "2D4B1A763449FE07B4F23B832C9D6FE03574E023"

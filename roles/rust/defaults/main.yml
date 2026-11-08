@@ -5,5 +5,5 @@
 rust_toolchain: nightly
 
 # Installation paths (using XDG-style locations)
-rust_cargo_home: "{{ ansible_env.HOME }}/.local/share/cargo"
-rust_rustup_home: "{{ ansible_env.HOME }}/.local/share/rustup"
+rust_cargo_home: "{{ home_dir }}/.local/share/cargo"
+rust_rustup_home: "{{ home_dir }}/.local/share/rustup"

@@ -1,0 +1,17 @@
+# Global mise config: the tool set every machine gets. Versions are requests;
+# the exact versions live in mise.lock next to this file. `mise upgrade`
+# moves both forward, `mise install --locked` reproduces them elsewhere.
+# Keep this file (and mise.lock) in the dotfiles repo.
+
+[settings]
+lockfile = true
+
+[tools]
+go = "latest"
+node = "lts"
+zig = "latest"
+delta = "latest"
+gh = "latest"
+kubectl = "latest"
+vault = "latest"
+gopass = "latest"

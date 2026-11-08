@@ -1,0 +1,58 @@
+---
+# mise role defaults. mise installs and pins the GitHub-release tools (go,
+# node, zig, delta, gh, kubectl, vault, gopass) declared in
+# ~/.config/mise/config.toml, with checksums and a lockfile it manages itself.
+
+# "latest" resolves the newest mise release at run time; pin e.g. "v2026.11.4" to freeze.
+mise_version: latest
+mise_github_repo: jdx/mise
+
+# Release asset naming: mise-v<version>-<os>-<arch>
+mise_os: "{{ 'macos' if ansible_facts['os_family'] == 'Darwin' else 'linux' }}"
+mise_arch: "{{ 'x64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' }}"
+
+mise_bin: "{{ local_bin }}/mise"
+mise_data_dir: "{{ local_share }}/mise"
+mise_shims_dir: "{{ mise_data_dir }}/shims"
+
+# The global config and its lockfile belong to the dotfiles. The copy in
+# files/config.toml is only installed when the file is missing.
+mise_config_dir: "{{ config_home }}/mise"
+mise_config_file: "{{ mise_config_dir }}/config.toml"
+mise_lock_file: "{{ mise_config_dir }}/mise.lock"
+# Platforms recorded in the lockfile so the same versions install on every machine.
+mise_lock_platforms: linux-x64,macos-arm64
+
+# Installs that mise replaces; removed when present. These are where the
+# retired go, node, zig and gopass roles put their binaries.
+mise_legacy_paths:
+  - /usr/local/go
+  - "{{ local_share }}/n"
+  - "{{ local_bin }}/zig"
+  - "{{ local_share }}/zig"
+  - "{{ local_bin }}/gopass"
+# apt repositories and packages that only existed to install tools mise now
+# provides. NodeSource must go before the node-* cleanup below, otherwise it
+# re-provides nodejs while the Debian packages are being removed.
+mise_legacy_apt_sources:
+  - /etc/apt/sources.list.d/nodesource.list
+  - /usr/share/keyrings/nodesource.gpg
+  - /etc/apt/sources.list.d/github-cli.list
+  - /usr/share/keyrings/githubcli-archive-keyring.gpg
+  - /etc/apt/sources.list.d/hashicorp.list
+  - /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  - /etc/apt/sources.list.d/kubernetes.list
+  - /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+mise_legacy_apt_packages:
+  - gh
+  - kubectl
+  - vault
+  - git-delta
+# dpkg-query patterns for the Debian Node.js stack (nodejs, npm and the
+# node-* packages npm pulled in). They are removed in one transaction so apt
+# never needs a nodejs provider.
+mise_legacy_apt_patterns:
+  - nodejs
+  - npm
+  - "libnode*"
+  - "node-*"

@@ -1,22 +1,13 @@
 ---
-# Herdr role defaults
+# herdr role defaults. herdr is installed directly rather than through mise:
+# herdr disables its own updater for mise installs, and that updater
+# (`herdr update --handoff`) is what swaps the binary under running sessions.
+# This role therefore only installs herdr when it is missing.
 
-# Herdr version (the role owns the version, do not use `herdr update`)
-herdr_version: "0.9.5"
+herdr_github_repo: herdrdev/herdr
+herdr_bin: "{{ local_bin }}/herdr"
 
-# Architecture mapping (release assets use x86_64 / aarch64)
-herdr_arch: "{{ 'x86_64' if ansible_architecture == 'x86_64' else 'aarch64' }}"
-
-# SHA-256 of the release binaries for the pinned version
-# Refresh with: gh api repos/herdrdev/herdr/releases/tags/v<version> --jq '.assets[] | "\(.name) \(.digest)"'
-herdr_checksums:
-  x86_64: "sha256:14d9e8bc8b4a9e0118d77c32266f76d461f09b40342eb23752960bd89f59929d"
-  aarch64: "sha256:17d7536f2da50859523680ef279dffcac8e4a235f4e46fe8da6c2ec44141897c"
-
-# Download URL (raw static binary, no archive)
-herdr_download_base: https://github.com/herdrdev/herdr/releases/download
-herdr_download_file: "herdr-linux-{{ herdr_arch }}"
-herdr_download_url: "{{ herdr_download_base }}/v{{ herdr_version }}/{{ herdr_download_file }}"
-
-# Installation paths
-herdr_bin_dir: "{{ ansible_env.HOME }}/.local/bin"
+# Release asset naming: herdr-<os>-<arch>
+herdr_os: "{{ 'macos' if ansible_facts['os_family'] == 'Darwin' else 'linux' }}"
+herdr_arch: "{{ 'x86_64' if cpu_arch == 'x86_64' else 'aarch64' }}"
+herdr_asset: "herdr-{{ herdr_os }}-{{ herdr_arch }}"

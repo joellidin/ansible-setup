@@ -1,8 +1,9 @@
 ---
 # i3blocks role defaults
 
-# Repository
+# Repository and branch
 i3blocks_repo: https://github.com/vivien/i3blocks
+i3blocks_version: master
 
 # Installation path
-i3blocks_src_dir: "{{ ansible_env.HOME }}/.local/src/i3blocks"
+i3blocks_src_dir: "{{ home_dir }}/.local/src/i3blocks"

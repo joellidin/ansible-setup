@@ -1,8 +1,10 @@
 ---
 # Python role defaults
 
-# Python version to install via uv
-python_version: "3.13"
+# "latest" installs the newest stable CPython; set e.g. "3.14" to pin a minor.
+python_version: latest
 
-# uv binary location
-python_uv_bin: "{{ ansible_env.HOME }}/.local/bin/uv"
+# uv binary location and installer
+python_uv_bin: "{{ local_bin }}/uv"
+python_uv_installer_url: https://astral.sh/uv/install.sh
+python_uv_installer: "{{ cache_home }}/uv-install.sh"

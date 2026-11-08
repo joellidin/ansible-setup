@@ -25,6 +25,7 @@ rules:
 
 ignore: |
   .github/
-  encrypt-data/
+  collections/
+  .ansible/
   .venv/
   venv/

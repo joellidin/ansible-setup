@@ -1,17 +1,19 @@
 ---
 galaxy_info:
   author: joellidin
-  description: Install herdr agent runtime
+  description: Install herdr, which then updates itself
   license: MIT
-  min_ansible_version: "2.14"
+  min_ansible_version: "2.15"
   platforms:
     - name: Ubuntu
       versions:
-        - jammy
         - noble
+        - resolute
+    - name: MacOSX
+      versions:
+        - all
   galaxy_tags:
     - herdr
-    - agents
     - terminal
 
 dependencies: []
