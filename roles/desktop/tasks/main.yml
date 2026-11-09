@@ -40,3 +40,39 @@
   tags:
     - install
     - desktop
+
+- name: Look for a fingerprint sensor that needs fprintd stopped before sleep
+  ansible.builtin.command: lsusb -d {{ item }}
+  loop: "{{ desktop_fprint_sleep_sensors }}"
+  register: desktop_fprint_sensor
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - desktop
+
+- name: Install the unit that stops fprintd before sleep
+  become: true
+  ansible.builtin.copy:
+    src: fprint-sleep.service
+    dest: /etc/systemd/system/fprint-sleep.service
+    owner: root
+    group: root
+    mode: "0644"
+  when: desktop_fprint_sensor.results | selectattr('rc', 'equalto', 0) | list | length > 0
+  register: desktop_fprint_sleep_unit
+  tags:
+    - install
+    - desktop
+
+- name: Enable the unit that stops fprintd before sleep
+  become: true
+  ansible.builtin.systemd_service:
+    name: fprint-sleep.service
+    enabled: true
+    daemon_reload: "{{ desktop_fprint_sleep_unit.changed }}"
+  when: desktop_fprint_sensor.results | selectattr('rc', 'equalto', 0) | list | length > 0
+  tags:
+    - install
+    - desktop
