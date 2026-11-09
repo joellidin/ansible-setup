@@ -2,13 +2,13 @@
 # bootstrap: one-line installer for https://github.com/joellidin/ansible-setup
 #
 # Served from the repo's docs/ directory via GitHub Pages at
-# https://get.lidin.xyz/bootstrap. It gets a fresh machine to a cloned repo
+# https://get.lidin.ai/bootstrap. It gets a fresh machine to a cloned repo
 # and then hands over to bootstrap.sh inside the repo, which shows a small
 # TUI (profile, roles, confirm) and runs the Ansible playbook.
 #
 # Usage:
-#   curl -fsSL https://get.lidin.xyz/bootstrap | sh
-#   curl -fsSL https://get.lidin.xyz/bootstrap | sh -s -- --profile dev --yes
+#   curl -fsSL https://get.lidin.ai/bootstrap | sh
+#   curl -fsSL https://get.lidin.ai/bootstrap | sh -s -- --profile dev --yes
 #
 # Flags after "--" are passed through to bootstrap.sh:
 #   --profile <name>   pick a profile from profiles.conf (skips screen 1)

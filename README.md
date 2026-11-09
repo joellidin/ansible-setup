@@ -8,7 +8,7 @@ come from [joellidin/dotfiles](https://github.com/joellidin/dotfiles).
 ## Quick start
 
 ```bash
-curl -fsSL https://get.lidin.xyz/bootstrap | sh
+curl -fsSL https://get.lidin.ai/bootstrap | sh
 ```
 
 The bootstrap script installs git, curl and uv, clones this repository to
@@ -16,8 +16,8 @@ The bootstrap script installs git, curl and uv, clones this repository to
 TUI, and runs the playbook. Non-interactive variants:
 
 ```bash
-curl -fsSL https://get.lidin.xyz/bootstrap | sh -s -- --profile dev --yes
-BOOTSTRAP_REF=v1.0.0 curl -fsSL https://get.lidin.xyz/bootstrap | sh
+curl -fsSL https://get.lidin.ai/bootstrap | sh -s -- --profile dev --yes
+BOOTSTRAP_REF=v1.0.0 curl -fsSL https://get.lidin.ai/bootstrap | sh
 ```
 
 Profiles live in `profiles.conf`. Re-run `~/ansible-setup/bootstrap.sh update`
@@ -107,7 +107,7 @@ The tool list for mise is in the dotfiles at `~/.config/mise/config.toml`.
 
 ```
 .
-├── docs/bootstrap          # POSIX stub served at get.lidin.xyz/bootstrap
+├── docs/bootstrap          # POSIX stub served at get.lidin.ai/bootstrap
 ├── bootstrap.sh            # TUI, profiles and the ansible invocation
 ├── profiles.conf           # profile -> roles mapping used by the TUI
 ├── local.yml               # the playbook
