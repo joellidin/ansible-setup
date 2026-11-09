@@ -16,7 +16,7 @@
 #   role that is not in the saved selection.
 # --dry-run prints the git and ansible commands instead of running them.
 #
-# Normally started by docs/bootstrap (curl -fsSL https://get.lidin.xyz/bootstrap | sh)
+# Normally started by docs/bootstrap (curl -fsSL https://get.lidin.ai/bootstrap | sh)
 # but it can be run directly from a checkout. Needs uv on PATH or in ~/.local/bin.
 # The TUI uses gum: on Linux a pinned release is downloaded to ~/.cache/bootstrap
 # and verified by sha256, on macOS it comes from Homebrew. gum is only fetched
