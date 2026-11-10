@@ -1,0 +1,10 @@
+[Unit]
+Description=Start fprintd ahead of the lock screen (at boot and after resume)
+After=fprintd.service suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl start fprintd.service
+
+[Install]
+WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target

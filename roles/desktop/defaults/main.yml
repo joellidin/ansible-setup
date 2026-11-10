@@ -29,9 +29,9 @@ desktop_packages:
   - libsqlite3-dev
   - git
 
-# USB fingerprint sensors (vendor:product) whose scan does not survive a
-# suspend: a verify still running when the lid closes leaves the sensor
-# claimed and unusable after resume. On these machines fprintd is stopped
-# before every sleep by files/fprint-sleep.service.
+# USB fingerprint sensors (vendor:product) that need the fprintd workarounds
+# in tasks/main.yml: fprintd stopped before sleep (a scan that spans a suspend
+# never recovers) and kept running otherwise (a scan that starts together
+# with fprintd is lost).
 desktop_fprint_sleep_sensors:
   - "06cb:0106"  # Synaptics, HP ZBook Ultra G1a (libfprint 1.95.1, Ubuntu 26.04)

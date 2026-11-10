@@ -65,7 +65,7 @@ rewrites `mise.lock`, which you then commit in the dotfiles.
 | `browser` | Zen or Brave browser | yes (Zen) |
 | `claude_code` | Claude Code CLI via its native installer | yes |
 | `core` | Build dependencies and fonts | no |
-| `desktop` | i3, rofi and the X11 desktop tool set, git from the git-core PPA, and stops fprintd before sleep on fingerprint sensors that wedge after a suspend | no |
+| `desktop` | i3, rofi and the X11 desktop tool set, git from the git-core PPA, and fprintd workarounds for fingerprint sensors that fail after a suspend or on the first scan | no |
 | `docker` | Docker Engine, Buildx and Compose from Docker's repository | no |
 | `dotfiles` | Dotfiles bare repository checkout | no |
 | `ghostty` | Ghostty terminal from the mkasberg deb releases | yes |
