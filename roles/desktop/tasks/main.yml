@@ -41,7 +41,15 @@
     - install
     - desktop
 
-- name: Look for a fingerprint sensor that needs fprintd stopped before sleep
+# Synaptics 06cb:0106 on libfprint 1.95.1 has two problems, fixed by three files:
+#   - a scan still running when the laptop sleeps never recovers after resume,
+#     so fprint-sleep.service stops fprintd before every sleep;
+#   - a scan that starts within a second of fprintd starting is lost (the sensor
+#     sees the finger but fprintd never reports a result), which is what
+#     happened when the lock screen D-Bus-activated fprintd. So fprintd stays
+#     resident (no-timeout drop-in) and fprintd-warm.service starts it at boot
+#     and right after resume, before anyone presses Enter on the lock screen.
+- name: Look for a fingerprint sensor that needs the fprintd workarounds
   ansible.builtin.command: lsusb -d {{ item }}
   loop: "{{ desktop_fprint_sleep_sensors }}"
   register: desktop_fprint_sensor
@@ -52,27 +60,53 @@
     - install
     - desktop
 
-- name: Install the unit that stops fprintd before sleep
-  become: true
-  ansible.builtin.copy:
-    src: fprint-sleep.service
-    dest: /etc/systemd/system/fprint-sleep.service
-    owner: root
-    group: root
-    mode: "0644"
+- name: Apply the fprintd workarounds for this fingerprint sensor
   when: desktop_fprint_sensor.results | selectattr('rc', 'equalto', 0) | list | length > 0
-  register: desktop_fprint_sleep_unit
+  become: true
   tags:
     - install
     - desktop
+  block:
+    - name: Install the units that stop fprintd before sleep and start it after
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /etc/systemd/system/{{ item }}
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - fprint-sleep.service
+        - fprintd-warm.service
+      register: desktop_fprint_units
 
-- name: Enable the unit that stops fprintd before sleep
-  become: true
-  ansible.builtin.systemd_service:
-    name: fprint-sleep.service
-    enabled: true
-    daemon_reload: "{{ desktop_fprint_sleep_unit.changed }}"
-  when: desktop_fprint_sensor.results | selectattr('rc', 'equalto', 0) | list | length > 0
-  tags:
-    - install
-    - desktop
+    - name: Create the fprintd drop-in directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/fprintd.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Keep fprintd running instead of exiting when idle
+      ansible.builtin.copy:
+        src: fprintd-no-timeout.conf
+        dest: /etc/systemd/system/fprintd.service.d/no-timeout.conf
+        owner: root
+        group: root
+        mode: "0644"
+      register: desktop_fprintd_dropin
+
+    - name: Enable the fprintd sleep and warm-up units
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+        daemon_reload: "{{ desktop_fprint_units.changed or desktop_fprintd_dropin.changed }}"
+      loop:
+        - fprint-sleep.service
+        - fprintd-warm.service
+
+    - name: Restart fprintd so it picks up the no-timeout drop-in
+      ansible.builtin.systemd_service:
+        name: fprintd.service
+        state: restarted
+      when: desktop_fprintd_dropin.changed

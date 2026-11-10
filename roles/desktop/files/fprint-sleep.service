@@ -3,8 +3,8 @@ Description=Stop fprintd before sleep so no fingerprint scan spans a suspend
 # A verify still running when the laptop sleeps (Enter on the lock screen,
 # then closing the lid) does not survive resume on the Synaptics 06cb:0106:
 # the scan never completes, the claim is not released, and the sensor stays
-# unusable until fprintd restarts. fprintd is D-Bus activated, so the next
-# fingerprint request after resume starts a fresh daemon.
+# unusable until fprintd restarts. fprintd-warm.service starts a fresh daemon
+# right after resume.
 Before=sleep.target
 
 [Service]
