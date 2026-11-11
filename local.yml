@@ -5,13 +5,28 @@
   pre_tasks:
     - name: Run preflight checks
       ansible.builtin.import_tasks: tasks/preflight.yml
-    - name: Update apt cache and install the deb822 repository prerequisite
+    # deb822_repository needs python3-debian under the system Python. The check
+    # keeps this `always` pre-task off apt once the package is there, so a run
+    # like `--tags neovim-update` never refreshes every apt source, and one
+    # unreachable third-party repository cannot fail it.
+    - name: Check for the deb822 repository prerequisite
+      ansible.builtin.command: dpkg-query -W -f=${Status} python3-debian
+      register: python_debian_status
+      changed_when: false
+      failed_when: false
+      check_mode: false
+      when: ansible_facts['os_family'] == 'Debian'
+      tags:
+        - always
+    - name: Install the deb822 repository prerequisite
       become: true
       ansible.builtin.apt:
         name: python3-debian
         state: present
         update_cache: true
-      when: ansible_facts['os_family'] == 'Debian'
+      when:
+        - ansible_facts['os_family'] == 'Debian'
+        - "'install ok installed' not in python_debian_status.stdout | default('')"
       tags:
         - always
   environment:
