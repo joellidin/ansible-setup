@@ -1,0 +1,145 @@
+---
+# Workstation tidy-up: git's keyring credential helper, packages and services
+# a single-user laptop does not need, and per-model kernel options.
+
+# Minimal images (CI containers) strip /usr/share/doc, so the source can be
+# missing; the helper is then skipped instead of failing the run.
+- name: Look for the git libsecret credential helper source
+  ansible.builtin.stat:
+    path: "{{ desktop_git_libsecret_src }}/git-credential-libsecret.c"
+  register: desktop_git_libsecret_source
+  tags:
+    - install
+    - desktop
+
+- name: Build and install the git libsecret credential helper
+  when: desktop_git_libsecret_source.stat.exists
+  tags:
+    - install
+    - desktop
+  block:
+    - name: Copy the git libsecret credential helper source to a build directory
+      ansible.builtin.copy:
+        src: "{{ desktop_git_libsecret_src }}/"
+        dest: "{{ desktop_git_libsecret_build_dir }}/"
+        remote_src: true
+        mode: preserve
+        directory_mode: "0755"
+
+    - name: Build the git libsecret credential helper
+      ansible.builtin.command:
+        cmd: make
+        chdir: "{{ desktop_git_libsecret_build_dir }}"
+        creates: "{{ desktop_git_libsecret_build_dir }}/git-credential-libsecret"
+
+    - name: Create the directory for the git libsecret credential helper
+      ansible.builtin.file:
+        path: "{{ desktop_git_libsecret_bin | dirname }}"
+        state: directory
+        mode: "0755"
+
+    - name: Install the git libsecret credential helper
+      ansible.builtin.copy:
+        src: "{{ desktop_git_libsecret_build_dir }}/git-credential-libsecret"
+        dest: "{{ desktop_git_libsecret_bin }}"
+        remote_src: true
+        mode: "0755"
+
+- name: Purge packages a single-user laptop does not use
+  become: true
+  ansible.builtin.apt:
+    name: "{{ desktop_purge_packages }}"
+    state: absent
+    purge: true
+  tags:
+    - install
+    - desktop
+
+- name: Read the service list
+  ansible.builtin.service_facts:
+  tags:
+    - install
+    - desktop
+
+- name: Disable services that have nothing to do here
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: false
+    state: stopped
+  loop: "{{ desktop_disabled_services + desktop_amd_disabled_services }}"
+  vars:
+    # thermald only drives Intel CPUs and never starts on AMD.
+    desktop_amd_disabled_services: >-
+      {{ ['thermald.service'] if 'AuthenticAMD' in ansible_facts['processor'] | default([]) else [] }}
+  when: item in ansible_facts['services']
+  tags:
+    - install
+    - desktop
+
+- name: Check for snapd
+  ansible.builtin.stat:
+    path: /usr/bin/snap
+  register: desktop_snapd
+  tags:
+    - install
+    - desktop
+
+- name: Remove snaps that are not wanted
+  become: true
+  community.general.snap:
+    name: "{{ desktop_remove_snaps }}"
+    state: absent
+  when: desktop_snapd.stat.exists
+  tags:
+    - install
+    - desktop
+
+- name: Read the Ubuntu Pro status
+  ansible.builtin.command: pro status --format json
+  register: desktop_pro_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - desktop
+
+- name: Remind to attach Ubuntu Pro
+  ansible.builtin.debug:
+    msg: >-
+      Ubuntu Pro is not attached. Attach it by hand with the token from
+      https://ubuntu.com/pro/dashboard: `sudo pro attach <token>`.
+  when:
+    - desktop_pro_status.rc == 0
+    - not (desktop_pro_status.stdout | from_json).attached | default(false)
+  tags:
+    - install
+    - desktop
+
+# Strix Halo GPU freeze (Launchpad bug 2115969): PCIe ASPM must be off.
+# Adds the option only when it is missing and leaves the rest of the line alone.
+- name: Turn PCIe ASPM off on models whose GPU freezes with it
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT="(?![^"]*\bpcie_aspm=off\b)[^"]*)"'
+    line: '\1 pcie_aspm=off"'
+    backrefs: true
+  when: >-
+    desktop_pcie_aspm_off_models
+    | select('in', ansible_facts['product_name'] | default(''))
+    | list | length > 0
+  register: desktop_grub_aspm
+  tags:
+    - install
+    - desktop
+
+- name: Regenerate the GRUB config after a kernel option change
+  become: true
+  ansible.builtin.command: update-grub
+  when: desktop_grub_aspm is changed
+  changed_when: true
+  tags:
+    - install
+    - desktop

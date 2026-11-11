@@ -28,6 +28,11 @@ desktop_packages:
   - sqlite3
   - libsqlite3-dev
   - git
+  - autotiling          # started by a user unit from the dotfiles
+  - policykit-1-gnome   # polkit agent that i3 starts; lets pkexec prompt
+  - polybar
+  - dunst
+  - libsecret-1-dev     # to build git's keyring credential helper (below)
 
 # USB fingerprint sensors (vendor:product) that need the fprintd workarounds
 # in tasks/main.yml: fprintd stopped before sleep (a scan that spans a suspend
@@ -35,3 +40,34 @@ desktop_packages:
 # with fprintd is lost).
 desktop_fprint_sleep_sensors:
   - "06cb:0106"  # Synaptics, HP ZBook Ultra G1a (libfprint 1.95.1, Ubuntu 26.04)
+
+# git's libsecret credential helper, built from the source that ships with the
+# git package. The dotfiles' git config uses it (`helper = libsecret`).
+desktop_git_libsecret_src: /usr/share/doc/git/contrib/credential/libsecret
+desktop_git_libsecret_build_dir: "{{ cache_home }}/git-credential-libsecret"
+desktop_git_libsecret_bin: "{{ local_bin }}/git-credential-libsecret"
+
+# Unused on a single-user laptop: domain logins (sssd), printer discovery,
+# modems, and the firmware-updater snap (it pops up dbx update prompts).
+desktop_purge_packages:
+  - sssd
+  - sssd-common
+  - libnss-sss
+  - libpam-sss
+  - sssd-ad
+  - sssd-ad-common
+  - sssd-ipa
+  - sssd-krb5
+  - sssd-krb5-common
+  - sssd-ldap
+  - sssd-proxy
+desktop_disabled_services:
+  - cups-browsed.service
+  - ModemManager.service
+desktop_remove_snaps:
+  - firmware-updater
+
+# Models (DMI product name, substring match) that need PCIe ASPM off to stop
+# the Strix Halo GPU from freezing. See ~/notes/reference/gpu-freeze-grub-fix.md.
+desktop_pcie_aspm_off_models:
+  - HP ZBook Ultra G1a
