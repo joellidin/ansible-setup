@@ -1,0 +1,7 @@
+default-cache-ttl {{ gpg_agent_cache_ttl }}
+max-cache-ttl {{ gpg_agent_max_cache_ttl }}
+{% if gpg_pinentry_found %}
+# PIN and passphrase prompts as the rofi password card (~/.config/rofi/password.rasi); without a display it
+# hands over to pinentry-curses. Test: sh ~/.claude/plans/test-pinentry-rofi.sh
+pinentry-program {{ gpg_pinentry_program }}
+{% endif %}

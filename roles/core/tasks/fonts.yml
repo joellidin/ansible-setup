@@ -1,5 +1,14 @@
 ---
-# Fonts installation tasks
+# Fonts installation tasks. Everything in fonts/ is copied to the user font
+# directory. The rofi menus, eww, polybar and dunst use two families:
+#   - "JetBrainsMono Nerd Font": JetBrains-Mono-Nerd-Font-Complete.ttf,
+#     JetBrains Mono 2.225 patched by Nerd Fonts v2 (OFL, fonts/OFL.txt),
+#     sha256 65174febd4d2bff43b2428345a791c9ae33235acd9027435bff42ad48d24da4c
+#   - "Symbols Nerd Font" and "Symbols Nerd Font Mono": NerdFontsSymbolsOnly/,
+#     unchanged from the Nerd Fonts v3.5.1 NerdFontsSymbolsOnly.tar.xz (MIT,
+#     sha256 01172f37db8543edb102e5cb5c64101c9f4686630804d49b419aa07b23a69996).
+#     The icons are Material Design codepoints from U+F0001 (Nerd Fonts v3),
+#     which the v2-patched fonts here do not have.
 
 - name: Create fonts directory
   ansible.builtin.file:

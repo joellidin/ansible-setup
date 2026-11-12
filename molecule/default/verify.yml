@@ -125,6 +125,59 @@
         fail_msg: "Docker APT repository not configured"
         success_msg: "Docker APT repository is configured"
 
+    # Verify the desktop role masks GNOME's SSH agent
+    - name: Check the GNOME SSH agent masks
+      ansible.builtin.stat:
+        path: "{{ home_dir }}/.config/systemd/user/{{ item }}"
+      loop:
+        - gcr-ssh-agent.socket
+        - gcr-ssh-agent.service
+      register: gcr_masks
+
+    - name: Verify the GNOME SSH agent masks
+      ansible.builtin.assert:
+        that:
+          - item.stat.islnk | default(false)
+          - item.stat.lnk_source | default('') == '/dev/null'
+        fail_msg: "{{ item.item }} is not masked (no link to /dev/null)"
+        success_msg: "{{ item.item }} is masked"
+      loop: "{{ gcr_masks.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Check notify-send is installed
+      ansible.builtin.command: which notify-send
+      register: notify_send_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify notify-send installation
+      ansible.builtin.assert:
+        that:
+          - notify_send_check.rc == 0
+        fail_msg: "notify-send (libnotify-bin) is not installed"
+        success_msg: "notify-send is installed"
+
+    # fc-match always answers with some font, so compare the family it picks.
+    - name: Check the fonts the menus and bars use
+      ansible.builtin.command: fc-match -f '%{family[0]}' '{{ item }}'
+      loop:
+        - JetBrainsMono Nerd Font
+        - Symbols Nerd Font
+        - Symbols Nerd Font Mono
+      register: font_check
+      changed_when: false
+
+    - name: Verify the fonts the menus and bars use
+      ansible.builtin.assert:
+        that:
+          - item.stdout == item.item
+        fail_msg: "{{ item.item }} resolves to {{ item.stdout }}"
+        success_msg: "{{ item.item }} is installed"
+      loop: "{{ font_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
     # Summary
     - name: Summarise mise tool results
       ansible.builtin.set_fact:

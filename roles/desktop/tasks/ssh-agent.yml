@@ -1,0 +1,22 @@
+---
+# GNOME's SSH agent (gcr-ssh-agent) asks for key passphrases in its own
+# dialog. Masking it leaves Ubuntu's OpenSSH agent (ssh-agent.socket from
+# openssh-client, SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/openssh_agent) as the session
+# agent, and that one asks through SSH_ASKPASS: the rofi card from the
+# dotfiles, which also carry the askpass drop-in for ssh-agent.service.
+# A mask is a link to /dev/null. Writing the links needs no running user
+# manager and changes nothing already running; on a fresh machine they are in
+# place before the first login.
+
+- name: Create the systemd user unit directory
+  ansible.builtin.file:
+    path: "{{ config_home }}/systemd/user"
+    state: directory
+    mode: "0755"
+
+- name: Mask GNOME's SSH agent
+  ansible.builtin.file:
+    src: /dev/null
+    dest: "{{ config_home }}/systemd/user/{{ item }}"
+    state: link
+  loop: "{{ desktop_masked_user_units }}"
