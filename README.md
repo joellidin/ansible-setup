@@ -64,13 +64,13 @@ rewrites `mise.lock`, which you then commit in the dotfiles.
 |------|-------------|--------------------------|
 | `browser` | Zen or Brave browser | yes (Zen) |
 | `claude_code` | Claude Code CLI via its native installer | yes |
-| `core` | Build dependencies and fonts | no |
-| `desktop` | i3, rofi and the X11 desktop tool set, git from the git-core PPA, and fprintd workarounds for fingerprint sensors that fail after a suspend or on the first scan; builds git's libsecret credential helper, purges sssd, disables unused services and the firmware-updater snap, and sets `pcie_aspm=off` on the ZBook Ultra G1a | no |
+| `core` | Build dependencies and fonts (JetBrains Mono and Symbols Nerd Fonts) | no |
+| `desktop` | i3, rofi and the X11 desktop tool set, git from the git-core PPA, and fprintd workarounds for fingerprint sensors that fail after a suspend or on the first scan; builds git's libsecret credential helper, purges sssd, disables unused services and the firmware-updater snap, sets `pcie_aspm=off` on the ZBook Ultra G1a, and masks GNOME's SSH agent so the OpenSSH agent is the session agent | no |
 | `docker` | Docker Engine, Buildx and Compose from Docker's repository | no |
 | `dotfiles` | Dotfiles bare repository checkout | no |
 | `ghostty` | Ghostty terminal from the mkasberg deb releases | yes |
 | `gopass` | zsh completion and password store for the mise-installed gopass | no |
-| `gpg` | Public key import, trust, YubiKey packages and check | no |
+| `gpg` | Public key import, trust, gpg-agent config (rofi PIN prompt), YubiKey packages and check | no |
 | `herdr` | herdr, installed once; it updates itself with `herdr update --handoff` | no |
 | `i3blocks` | i3blocks status bar from source | no |
 | `i3lock_color` | i3lock-color from source plus betterlockscreen and xss-lock | yes |

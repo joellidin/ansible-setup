@@ -1,0 +1,31 @@
+---
+# gpg-agent: a two-hour PIN cache and the rofi PIN prompt. The prompt script
+# (pinentry-rofi) comes from the dotfiles; until it is there the file leaves
+# pinentry-program out, so gpg keeps its default prompt instead of a broken one.
+
+- name: Create the GnuPG home
+  ansible.builtin.file:
+    path: "{{ gpg_home }}"
+    state: directory
+    mode: "0700"
+
+- name: Look for the rofi PIN prompt from the dotfiles
+  ansible.builtin.stat:
+    path: "{{ gpg_pinentry_program }}"
+  register: gpg_pinentry_stat
+
+- name: Configure gpg-agent
+  ansible.builtin.template:
+    src: gpg-agent.conf.j2
+    dest: "{{ gpg_home }}/gpg-agent.conf"
+    mode: "0600"
+  vars:
+    gpg_pinentry_found: "{{ gpg_pinentry_stat.stat.executable | default(false) }}"
+  notify: Reload gpg-agent
+
+- name: Report a missing rofi PIN prompt
+  ansible.builtin.debug:
+    msg: >-
+      {{ gpg_pinentry_program }} is missing, so gpg-agent keeps its default PIN prompt.
+      Check out the dotfiles and run the gpg role again.
+  when: not gpg_pinentry_stat.stat.executable | default(false)

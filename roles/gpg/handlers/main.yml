@@ -1,0 +1,6 @@
+---
+# Reloading re-reads gpg-agent.conf in a running agent (and clears cached
+# PINs). With no agent running it does nothing; the next agent reads the file.
+- name: Reload gpg-agent
+  ansible.builtin.command: gpgconf --reload gpg-agent
+  changed_when: true

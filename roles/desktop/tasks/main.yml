@@ -44,6 +44,9 @@
 - name: Workstation tidy-up and per-model kernel options
   ansible.builtin.import_tasks: workstation.yml
 
+- name: Use the OpenSSH agent instead of GNOME's
+  ansible.builtin.import_tasks: ssh-agent.yml
+
 # Synaptics 06cb:0106 on libfprint 1.95.1 has two problems, fixed by three files:
 #   - a scan still running when the laptop sleeps never recovers after resume,
 #     so fprint-sleep.service stops fprintd before every sleep;

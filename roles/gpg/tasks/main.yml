@@ -1,5 +1,6 @@
 ---
-# GPG role - imports the public key, sets its trust, and checks for the YubiKey
+# GPG role - imports the public key, sets its trust, configures gpg-agent and
+# checks for the YubiKey
 
 - name: Install Yubikey packages
   become: true
@@ -78,6 +79,13 @@
   tags:
     - install
     - gpg
+
+- name: Configure gpg-agent
+  ansible.builtin.import_tasks: agent.yml
+  tags:
+    - install
+    - gpg
+    - gpg-agent
 
 # The private key lives on the YubiKey. This does not fail the run; it tells
 # the user whether commit signing will work right away.

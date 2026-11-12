@@ -11,10 +11,18 @@ gpg_key_fingerprint: "2D4B1A763449FE07B4F23B832C9D6FE03574E023"
 # Trust level (6 = ultimate)
 gpg_trust_level: "6"
 
-# Yubikey packages to install
+# YubiKey packages, plus the terminal PIN prompt
 gpg_yubikey_packages:
   - scdaemon
   - yubikey-manager
   - libpam-yubico
   - libpam-u2f
   - libu2f-udev
+  - pinentry-curses     # pinentry-rofi hands over to it without a display
+
+# gpg-agent.conf
+gpg_home: "{{ home_dir }}/.gnupg"
+gpg_agent_cache_ttl: 7200
+gpg_agent_max_cache_ttl: 7200
+# PIN prompt script from the dotfiles (the rofi password card).
+gpg_pinentry_program: "{{ local_bin }}/pinentry-rofi"

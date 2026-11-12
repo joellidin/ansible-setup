@@ -33,6 +33,12 @@ desktop_packages:
   - polybar
   - dunst
   - libsecret-1-dev     # to build git's keyring credential helper (below)
+  - libnotify-bin       # notify-send, for the "Touch your YubiKey" notice
+
+# User units masked so the OpenSSH agent is the session agent (tasks/ssh-agent.yml).
+desktop_masked_user_units:
+  - gcr-ssh-agent.socket
+  - gcr-ssh-agent.service
 
 # USB fingerprint sensors (vendor:product) that need the fprintd workarounds
 # in tasks/main.yml: fprintd stopped before sleep (a scan that spans a suspend
