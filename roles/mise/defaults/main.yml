@@ -50,6 +50,7 @@ mise_legacy_apt_packages:
   - kubectl
   - vault
   - git-delta
+  - gopass-archive-keyring  # owns gopass.sources, gopass.pref and the key
 # dpkg-query patterns for the Debian Node.js stack (nodejs, npm and the
 # node-* packages npm pulled in). They are removed in one transaction so apt
 # never needs a nodejs provider.
