@@ -1,6 +1,7 @@
 ---
 # GNOME's SSH agent (gcr-ssh-agent) asks for key passphrases in its own
-# dialog. Masking it leaves Ubuntu's OpenSSH agent (ssh-agent.socket from
+# dialog, and gpg-agent's SSH socket offers only the YubiKey's gpg key.
+# Masking both leaves Ubuntu's OpenSSH agent (ssh-agent.socket from
 # openssh-client, SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/openssh_agent) as the session
 # agent, and that one asks through SSH_ASKPASS: the rofi card from the
 # dotfiles, which also carry the askpass drop-in for ssh-agent.service.
@@ -14,7 +15,7 @@
     state: directory
     mode: "0755"
 
-- name: Mask GNOME's SSH agent
+- name: Mask the SSH agents other than OpenSSH's
   ansible.builtin.file:
     src: /dev/null
     dest: "{{ config_home }}/systemd/user/{{ item }}"
