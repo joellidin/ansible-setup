@@ -125,16 +125,17 @@
         fail_msg: "Docker APT repository not configured"
         success_msg: "Docker APT repository is configured"
 
-    # Verify the desktop role masks GNOME's SSH agent
-    - name: Check the GNOME SSH agent masks
+    # Verify the desktop role masks the SSH agents other than OpenSSH's
+    - name: Check the SSH agent masks
       ansible.builtin.stat:
         path: "{{ home_dir }}/.config/systemd/user/{{ item }}"
       loop:
         - gcr-ssh-agent.socket
         - gcr-ssh-agent.service
+        - gpg-agent-ssh.socket
       register: gcr_masks
 
-    - name: Verify the GNOME SSH agent masks
+    - name: Verify the SSH agent masks
       ansible.builtin.assert:
         that:
           - item.stat.islnk | default(false)

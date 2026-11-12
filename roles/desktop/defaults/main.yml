@@ -39,6 +39,10 @@ desktop_packages:
 desktop_masked_user_units:
   - gcr-ssh-agent.socket
   - gcr-ssh-agent.service
+  # gpg-agent serves an SSH socket even without enable-ssh-support. It offers
+  # only the YubiKey's gpg auth key, yet herdr can pick it as the pane agent.
+  # gpg signing uses gpg-agent's main socket and is unaffected.
+  - gpg-agent-ssh.socket
 
 # USB fingerprint sensors (vendor:product) that need the fprintd workarounds
 # in tasks/main.yml: fprintd stopped before sleep (a scan that spans a suspend
