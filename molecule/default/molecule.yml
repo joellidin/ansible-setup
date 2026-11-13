@@ -31,8 +31,6 @@ provisioner:
     host_vars:
       ubuntu-resolute:
         ansible_user: testuser
-  options:
-    skip-tags: gpg
   config_options:
     defaults:
       callbacks_enabled: ansible.posix.profile_tasks
