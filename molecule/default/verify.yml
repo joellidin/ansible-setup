@@ -159,6 +159,35 @@
         fail_msg: "notify-send (libnotify-bin) is not installed"
         success_msg: "notify-send is installed"
 
+    # The desktop role builds git's libsecret credential helper from the source
+    # in /usr/share/doc/git, which the molecule image keeps (Dockerfile.j2).
+    - name: Check the git libsecret credential helper
+      ansible.builtin.stat:
+        path: "{{ home_dir }}/.local/bin/git-credential-libsecret"
+      register: libsecret_helper
+
+    - name: Verify the git libsecret credential helper
+      ansible.builtin.assert:
+        that:
+          - libsecret_helper.stat.exists
+          - libsecret_helper.stat.executable
+        fail_msg: "git-credential-libsecret was not built and installed"
+        success_msg: "git-credential-libsecret is installed"
+
+    # A check run must not fail when the build directory is missing (a first
+    # run, or a cleared ~/.cache): in check mode the copy into it only reports
+    # what it would do. The helper itself stays installed.
+    - name: Run the workstation tasks in check mode without a build directory
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/../../roles/desktop"
+        tasks_from: workstation
+        apply:
+          check_mode: true
+      vars:
+        cache_home: "{{ home_dir }}/.cache"
+        local_bin: "{{ home_dir }}/.local/bin"
+        desktop_git_libsecret_build_dir: "{{ home_dir }}/.cache/libsecret-check-mode-test"
+
     # fc-match always answers with some font, so compare the family it picks.
     - name: Check the fonts the menus and bars use
       ansible.builtin.command: fc-match -f '%{family[0]}' '{{ item }}'
@@ -248,3 +277,4 @@
           - mise tools: {{ 'OK' if mise_tools_ok else 'FAILED' }}
           - Zen: {{ 'OK' if zen_check.stat.exists else 'FAILED' }}
           - GPG key: {{ 'OK' if gpg_key_check.rc == 0 else 'FAILED' }}
+          - libsecret helper: {{ 'OK' if libsecret_helper.stat.exists else 'FAILED' }}
