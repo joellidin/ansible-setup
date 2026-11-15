@@ -30,7 +30,6 @@ desktop_packages:
   - git
   - autotiling          # started by a user unit from the dotfiles
   - policykit-1-gnome   # polkit agent that i3 starts; lets pkexec prompt
-  - polybar
   - dunst
   - libsecret-1-dev     # to build git's keyring credential helper (below)
   - libnotify-bin       # notify-send, for the "Touch your YubiKey" notice
