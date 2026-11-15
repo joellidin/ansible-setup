@@ -26,11 +26,19 @@
         mode: preserve
         directory_mode: "0755"
 
+    # In check mode the copy above only reports that it would create the build
+    # directory, so make and the install below wait for what is really there.
+    - name: Look for the git libsecret build directory
+      ansible.builtin.stat:
+        path: "{{ desktop_git_libsecret_build_dir }}"
+      register: desktop_git_libsecret_build
+
     - name: Build the git libsecret credential helper
       ansible.builtin.command:
         cmd: make
         chdir: "{{ desktop_git_libsecret_build_dir }}"
         creates: "{{ desktop_git_libsecret_build_dir }}/git-credential-libsecret"
+      when: desktop_git_libsecret_build.stat.exists
 
     - name: Create the directory for the git libsecret credential helper
       ansible.builtin.file:
@@ -38,12 +46,18 @@
         state: directory
         mode: "0755"
 
+    - name: Look for the built git libsecret credential helper
+      ansible.builtin.stat:
+        path: "{{ desktop_git_libsecret_build_dir }}/git-credential-libsecret"
+      register: desktop_git_libsecret_built
+
     - name: Install the git libsecret credential helper
       ansible.builtin.copy:
         src: "{{ desktop_git_libsecret_build_dir }}/git-credential-libsecret"
         dest: "{{ desktop_git_libsecret_bin }}"
         remote_src: true
         mode: "0755"
+      when: desktop_git_libsecret_built.stat.exists
 
 - name: Purge packages a single-user laptop does not use
   become: true
