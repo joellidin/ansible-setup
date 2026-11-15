@@ -1,0 +1,12 @@
+[Unit]
+Description=Restart fprintd when the fingerprint sensor jams
+After=systemd-journald.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/libexec/fprintd-unjam
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

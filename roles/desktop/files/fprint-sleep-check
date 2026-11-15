@@ -1,0 +1,19 @@
+#!/bin/sh
+# fprint-sleep-check: stop fprintd before sleep only while a fingerprint scan is running.
+# fprint-sleep.service (ansible e2898ce) stopped it before every sleep, because a scan that spans
+# a suspend jams the Synaptics 06cb:0106 sensor. But then every resume starts fprintd cold, and an
+# unlock that starts within ~0.5 s of waking fails (2026-11-14 13:07). finger-needed is true only
+# while a scan waits for a finger (measured 2026-11-14), so stop fprintd only then, or when the
+# state can't be read (fail safe: the old behaviour).
+set -u
+systemctl --quiet is-active fprintd.service || exit 0
+dev=$(timeout 3 busctl --system call net.reactivated.Fprint /net/reactivated/Fprint/Manager \
+    net.reactivated.Fprint.Manager GetDefaultDevice 2>/dev/null | sed -n 's/^o "\(.*\)"$/\1/p')
+needed=$(timeout 3 busctl --system get-property net.reactivated.Fprint \
+    "${dev:-/net/reactivated/Fprint/Device/0}" net.reactivated.Fprint.Device finger-needed 2>/dev/null)
+if [ "$needed" = "b false" ]; then
+    echo "no scan running: fprintd keeps running through the sleep"
+    exit 0
+fi
+echo "scan running or state unknown (${needed:-no answer}): stopping fprintd before the sleep"
+exec systemctl stop fprintd.service

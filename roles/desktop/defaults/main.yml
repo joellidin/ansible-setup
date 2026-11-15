@@ -45,9 +45,10 @@ desktop_masked_user_units:
   - gpg-agent-ssh.socket
 
 # USB fingerprint sensors (vendor:product) that need the fprintd workarounds
-# in tasks/main.yml: fprintd stopped before sleep (a scan that spans a suspend
-# never recovers) and kept running otherwise (a scan that starts together
-# with fprintd is lost).
+# in tasks/main.yml: fprintd stopped before sleep while a scan is running (a
+# scan that spans a suspend never recovers), kept running otherwise (a scan
+# that starts together with fprintd is lost), and restarted when the sensor
+# jams (a scan stopped while running).
 desktop_fprint_sleep_sensors:
   - "06cb:0106"  # Synaptics, HP ZBook Ultra G1a (libfprint 1.95.1, Ubuntu 26.04)
 

@@ -54,4 +54,5 @@ jobs:
 
       - name: Lint shell scripts
         run: |
-          uvx --from shellcheck-py shellcheck docs/bootstrap bootstrap.sh
+          uvx --from shellcheck-py shellcheck docs/bootstrap bootstrap.sh \
+            roles/desktop/files/fprint-sleep-check roles/desktop/files/fprintd-unjam
