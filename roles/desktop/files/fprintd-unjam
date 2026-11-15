@@ -1,0 +1,18 @@
+#!/bin/sh
+# fprintd-unjam: restart fprintd when the fingerprint sensor jams.
+# 2026-11-13 16:33 a scan was stopped while it was still running and the Synaptics 06cb:0106 sensor
+# stopped answering ("pam_fprintd(sudo:auth): ReleaseDevice failed: Release failed with error:
+# transfer timed out"). fprintd kept the device claimed after that, so every fingerprint unlock
+# failed until a suspend restarted fprintd the next day. pam_fprintd logs the failed release and
+# each later "failed to claim device"; on either, restart fprintd (at most once per 30 s).
+# A clean timeout (nobody touches) does not jam it: 3 of 3 passed on 2026-11-14.
+set -u
+journalctl --follow --lines=0 --output=cat \
+    --grep='pam_fprintd.*(ReleaseDevice failed|failed to claim device)' |
+while IFS= read -r _line; do
+    now=$(date +%s)
+    [ $((now - ${last:-0})) -lt 30 ] && continue
+    last=$now
+    echo "fingerprint sensor jammed (see the pam_fprintd line above): restarting fprintd"
+    systemctl restart fprintd.service
+done

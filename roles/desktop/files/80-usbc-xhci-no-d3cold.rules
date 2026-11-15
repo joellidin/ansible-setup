@@ -1,0 +1,5 @@
+# Strix Halo USB-C xHCI controllers 1022:1589 (0000:c5:00.3) and 1022:158b (0000:c5:00.4): no D3cold.
+# 2026-11-12 14:41 c5:00.3 failed to wake from D3cold ("Controller not ready at resume -19",
+# "HC died; cleaning up") and its port ignored every device (the YubiKey) until a PCI remove and
+# rescan on 2026-11-14. They still power down to D3hot when idle.
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1022", ATTR{device}=="0x1589|0x158b", ATTR{d3cold_allowed}="0"

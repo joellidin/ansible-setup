@@ -1,6 +1,6 @@
 ---
 # Fonts installation tasks. Everything in fonts/ is copied to the user font
-# directory. The rofi menus, eww, polybar and dunst use two families:
+# directory. The rofi menus, eww and dunst use two families:
 #   - "JetBrainsMono Nerd Font": JetBrains-Mono-Nerd-Font-Complete.ttf,
 #     JetBrains Mono 2.225 patched by Nerd Fonts v2 (OFL, fonts/OFL.txt),
 #     sha256 65174febd4d2bff43b2428345a791c9ae33235acd9027435bff42ad48d24da4c

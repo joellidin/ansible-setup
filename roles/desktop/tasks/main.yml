@@ -47,14 +47,19 @@
 - name: Use the OpenSSH agent instead of GNOME's
   ansible.builtin.import_tasks: ssh-agent.yml
 
-# Synaptics 06cb:0106 on libfprint 1.95.1 has two problems, fixed by three files:
+# Synaptics 06cb:0106 on libfprint 1.95.1 has three problems:
 #   - a scan still running when the laptop sleeps never recovers after resume,
-#     so fprint-sleep.service stops fprintd before every sleep;
+#     so fprint-sleep.service stops fprintd before sleep. Its drop-in runs
+#     fprint-sleep-check, which stops it only while a scan is running: a
+#     resume that starts fprintd cold loses an unlock in the first ~0.5 s;
 #   - a scan that starts within a second of fprintd starting is lost (the sensor
 #     sees the finger but fprintd never reports a result), which is what
 #     happened when the lock screen D-Bus-activated fprintd. So fprintd stays
 #     resident (no-timeout drop-in) and fprintd-warm.service starts it at boot
-#     and right after resume, before anyone presses Enter on the lock screen.
+#     and right after resume, before anyone presses Enter on the lock screen;
+#   - a scan stopped while it is still running jams the sensor, and every
+#     unlock fails until fprintd restarts. fprintd-unjam.service follows the
+#     journal and restarts fprintd when pam_fprintd reports the jam.
 - name: Look for a fingerprint sensor that needs the fprintd workarounds
   ansible.builtin.command: lsusb -d {{ item }}
   loop: "{{ desktop_fprint_sleep_sensors }}"
@@ -73,7 +78,27 @@
     - install
     - desktop
   block:
-    - name: Install the units that stop fprintd before sleep and start it after
+    - name: Create the directory for the fprintd helper scripts
+      ansible.builtin.file:
+        path: /usr/local/libexec
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install the sleep check and unjam scripts
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: /usr/local/libexec/{{ item }}
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - fprint-sleep-check
+        - fprintd-unjam
+      register: desktop_fprint_scripts
+
+    - name: Install the units that stop fprintd before sleep, start it after and unjam it
       ansible.builtin.copy:
         src: "{{ item }}"
         dest: /etc/systemd/system/{{ item }}
@@ -83,15 +108,19 @@
       loop:
         - fprint-sleep.service
         - fprintd-warm.service
+        - fprintd-unjam.service
       register: desktop_fprint_units
 
-    - name: Create the fprintd drop-in directory
+    - name: Create the fprintd and fprint-sleep drop-in directories
       ansible.builtin.file:
-        path: /etc/systemd/system/fprintd.service.d
+        path: /etc/systemd/system/{{ item }}.d
         state: directory
         owner: root
         group: root
         mode: "0755"
+      loop:
+        - fprintd.service
+        - fprint-sleep.service
 
     - name: Keep fprintd running instead of exiting when idle
       ansible.builtin.copy:
@@ -102,17 +131,84 @@
         mode: "0644"
       register: desktop_fprintd_dropin
 
+    - name: Stop fprintd before sleep only while a scan is running
+      ansible.builtin.copy:
+        src: fprint-sleep-only-when-scanning.conf
+        dest: /etc/systemd/system/fprint-sleep.service.d/only-when-scanning.conf
+        owner: root
+        group: root
+        mode: "0644"
+      register: desktop_fprint_sleep_dropin
+
     - name: Enable the fprintd sleep and warm-up units
       ansible.builtin.systemd_service:
         name: "{{ item }}"
         enabled: true
-        daemon_reload: "{{ desktop_fprint_units.changed or desktop_fprintd_dropin.changed }}"
+        daemon_reload: >-
+          {{ desktop_fprint_units.changed or desktop_fprintd_dropin.changed
+             or desktop_fprint_sleep_dropin.changed }}
       loop:
         - fprint-sleep.service
         - fprintd-warm.service
+
+    # Restarted when its unit or script changed, so it runs the new copy.
+    - name: Run the watcher that restarts fprintd when the sensor jams
+      ansible.builtin.systemd_service:
+        name: fprintd-unjam.service
+        enabled: true
+        state: >-
+          {{ 'restarted'
+             if (desktop_fprint_units.results + desktop_fprint_scripts.results)
+                | selectattr('item', 'match', '^fprintd-unjam') | selectattr('changed') | list
+             else 'started' }}
 
     - name: Restart fprintd so it picks up the no-timeout drop-in
       ansible.builtin.systemd_service:
         name: fprintd.service
         state: restarted
       when: desktop_fprintd_dropin.changed
+
+# Strix Halo USB-C xHCI controllers: on 2026-11-12 c5:00.3 failed to wake from
+# D3cold ("HC died") and its port ignored the YubiKey until a PCI remove and
+# rescan. The udev rule keeps both out of D3cold; they still idle in D3hot.
+# lspci -d exits 0 even without a match, so the output decides.
+- name: Look for USB-C controllers that must stay out of D3cold
+  ansible.builtin.command: lspci -n -d {{ item }}
+  loop: "{{ desktop_usbc_no_d3cold_controllers }}"
+  register: desktop_usbc_controllers
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - desktop
+
+- name: Keep the USB-C controllers out of D3cold
+  when: desktop_usbc_controllers.results | map(attribute='stdout', default='') | select | list | length > 0
+  become: true
+  tags:
+    - install
+    - desktop
+  block:
+    - name: Install the udev rule that disables D3cold on the USB-C controllers
+      ansible.builtin.copy:
+        src: 80-usbc-xhci-no-d3cold.rules
+        dest: /etc/udev/rules.d/80-usbc-xhci-no-d3cold.rules
+        owner: root
+        group: root
+        mode: "0644"
+      register: desktop_usbc_rule
+
+    - name: Reload the udev rules
+      ansible.builtin.command: udevadm control --reload
+      when: desktop_usbc_rule.changed
+      changed_when: true
+
+    # Re-sends "add" only for the two controllers (the IDs in the rule), so the
+    # rule applies now instead of at the next boot.
+    - name: Apply the rule to the USB-C controllers now
+      ansible.builtin.command: >-
+        udevadm trigger --settle --subsystem-match=pci --action=add
+        --attr-match=vendor=0x1022 --attr-match=device=0x158[9b]
+      when: desktop_usbc_rule.changed
+      changed_when: true
