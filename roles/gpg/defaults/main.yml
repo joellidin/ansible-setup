@@ -17,7 +17,6 @@ gpg_yubikey_packages:
   - yubikey-manager
   - libpam-yubico
   - libpam-u2f
-  - libu2f-udev
   - pinentry-curses     # pinentry-rofi hands over to it without a display
 
 # gpg-agent.conf

@@ -179,6 +179,60 @@
       loop_control:
         label: "{{ item.item }}"
 
+    # Verify the gpg role: YubiKey packages, signing key and trust, agent config
+    - name: Check the YubiKey packages
+      ansible.builtin.command: dpkg-query -W -f='${db:Status-Status}' {{ item }}
+      loop:
+        - scdaemon
+        - yubikey-manager
+        - libpam-yubico
+        - libpam-u2f
+        - pinentry-curses
+      register: gpg_pkg_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify the YubiKey packages
+      ansible.builtin.assert:
+        that:
+          - item.stdout == 'installed'
+        fail_msg: "{{ item.item }} is not installed"
+        success_msg: "{{ item.item }} is installed"
+      loop: "{{ gpg_pkg_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Check the signing key is imported
+      ansible.builtin.command: gpg --list-keys --with-colons 2D4B1A763449FE07B4F23B832C9D6FE03574E023
+      register: gpg_key_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check the signing key's owner trust
+      ansible.builtin.command: gpg --export-ownertrust
+      register: gpg_trust_check
+      changed_when: false
+
+    - name: Verify the signing key is imported with ultimate trust
+      ansible.builtin.assert:
+        that:
+          - gpg_key_check.rc == 0
+          - "'2D4B1A763449FE07B4F23B832C9D6FE03574E023:6:' in gpg_trust_check.stdout"
+        fail_msg: "The signing key is missing or not ultimately trusted"
+        success_msg: "The signing key is imported with ultimate trust"
+
+    - name: Read the gpg-agent config
+      ansible.builtin.slurp:
+        src: "{{ home_dir }}/.gnupg/gpg-agent.conf"
+      register: gpg_agent_conf
+
+    - name: Verify gpg-agent uses the rofi PIN prompt
+      ansible.builtin.assert:
+        that:
+          - ("pinentry-program " ~ home_dir ~ "/.local/bin/pinentry-rofi") in (gpg_agent_conf.content | b64decode)
+        fail_msg: "gpg-agent.conf has no pinentry-rofi line"
+        success_msg: "gpg-agent uses pinentry-rofi"
+
     # Summary
     - name: Summarise mise tool results
       ansible.builtin.set_fact:
@@ -193,3 +247,4 @@
           - Docker: {{ 'OK' if docker_check.rc == 0 else 'FAILED' }}
           - mise tools: {{ 'OK' if mise_tools_ok else 'FAILED' }}
           - Zen: {{ 'OK' if zen_check.stat.exists else 'FAILED' }}
+          - GPG key: {{ 'OK' if gpg_key_check.rc == 0 else 'FAILED' }}
