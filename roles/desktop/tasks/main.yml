@@ -167,3 +167,48 @@
         name: fprintd.service
         state: restarted
       when: desktop_fprintd_dropin.changed
+
+# Strix Halo USB-C xHCI controllers: on 2026-11-12 c5:00.3 failed to wake from
+# D3cold ("HC died") and its port ignored the YubiKey until a PCI remove and
+# rescan. The udev rule keeps both out of D3cold; they still idle in D3hot.
+# lspci -d exits 0 even without a match, so the output decides.
+- name: Look for USB-C controllers that must stay out of D3cold
+  ansible.builtin.command: lspci -n -d {{ item }}
+  loop: "{{ desktop_usbc_no_d3cold_controllers }}"
+  register: desktop_usbc_controllers
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - desktop
+
+- name: Keep the USB-C controllers out of D3cold
+  when: desktop_usbc_controllers.results | map(attribute='stdout', default='') | select | list | length > 0
+  become: true
+  tags:
+    - install
+    - desktop
+  block:
+    - name: Install the udev rule that disables D3cold on the USB-C controllers
+      ansible.builtin.copy:
+        src: 80-usbc-xhci-no-d3cold.rules
+        dest: /etc/udev/rules.d/80-usbc-xhci-no-d3cold.rules
+        owner: root
+        group: root
+        mode: "0644"
+      register: desktop_usbc_rule
+
+    - name: Reload the udev rules
+      ansible.builtin.command: udevadm control --reload
+      when: desktop_usbc_rule.changed
+      changed_when: true
+
+    # Re-sends "add" only for the two controllers (the IDs in the rule), so the
+    # rule applies now instead of at the next boot.
+    - name: Apply the rule to the USB-C controllers now
+      ansible.builtin.command: >-
+        udevadm trigger --settle --subsystem-match=pci --action=add
+        --attr-match=vendor=0x1022 --attr-match=device=0x158[9b]
+      when: desktop_usbc_rule.changed
+      changed_when: true

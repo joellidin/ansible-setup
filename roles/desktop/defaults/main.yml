@@ -34,6 +34,7 @@ desktop_packages:
   - dunst
   - libsecret-1-dev     # to build git's keyring credential helper (below)
   - libnotify-bin       # notify-send, for the "Touch your YubiKey" notice
+  - pciutils            # lspci, to look for the USB-C controllers (below)
 
 # User units masked so the OpenSSH agent is the session agent (tasks/ssh-agent.yml).
 desktop_masked_user_units:
@@ -51,6 +52,13 @@ desktop_masked_user_units:
 # jams (a scan stopped while running).
 desktop_fprint_sleep_sensors:
   - "06cb:0106"  # Synaptics, HP ZBook Ultra G1a (libfprint 1.95.1, Ubuntu 26.04)
+
+# PCI controllers (vendor:device) kept out of D3cold by
+# files/80-usbc-xhci-no-d3cold.rules, which matches the same IDs. The rule is
+# installed only where one of them is present.
+desktop_usbc_no_d3cold_controllers:
+  - "1022:1589"  # Strix Halo USB-C xHCI (HP ZBook Ultra G1a): failed to wake from D3cold
+  - "1022:158b"  # Strix Halo USB-C xHCI, second controller
 
 # git's libsecret credential helper, built from the source that ships with the
 # git package. The dotfiles' git config uses it (`helper = libsecret`).
