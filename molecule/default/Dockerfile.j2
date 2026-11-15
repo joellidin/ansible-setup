@@ -4,6 +4,10 @@ FROM {{ item.image }}
 ENV DEBIAN_FRONTEND=noninteractive
 ENV container=docker
 
+# The base image drops /usr/share/doc. Keep git's contrib sources, as a desktop
+# install does, so the desktop role builds the libsecret credential helper.
+RUN echo 'path-include=/usr/share/doc/git/contrib/*' > /etc/dpkg/dpkg.cfg.d/zz-git-contrib
+
 # Install required packages (keep apt lists for faster playbook runs)
 RUN apt-get update && apt-get install -y \
     systemd \
