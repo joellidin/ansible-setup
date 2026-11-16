@@ -262,6 +262,35 @@
         fail_msg: "gpg-agent.conf has no pinentry-rofi line"
         success_msg: "gpg-agent uses pinentry-rofi"
 
+    # Installers must leave the shell startup files alone. ~/.profile (a link
+    # to ~/.config/shell/profile) and ~/.zshenv are tracked in the dotfiles,
+    # and the profile already sets up cargo, so a line an installer appends
+    # shows up as a dotfiles change. ~/.bashrc must stay the /etc/skel copy.
+    - name: Check the dotfiles' shell startup files are unchanged
+      ansible.builtin.command: >-
+        git --git-dir={{ home_dir }}/.dotfiles --work-tree={{ home_dir }}
+        status --porcelain --untracked-files=all --
+        .profile .config/shell/profile .zshenv .bash_profile
+        .config/zsh/.zshenv .config/zsh/.zprofile .config/zsh/.zshrc
+      register: startup_files_status
+      changed_when: false
+
+    - name: Check ~/.bashrc is still the /etc/skel copy
+      ansible.builtin.command: cmp {{ home_dir }}/.bashrc /etc/skel/.bashrc
+      register: bashrc_cmp
+      changed_when: false
+      failed_when: false
+
+    - name: Verify no installer edited the shell startup files
+      ansible.builtin.assert:
+        that:
+          - startup_files_status.stdout == ''
+          - bashrc_cmp.rc == 0
+        fail_msg: >-
+          Shell startup files changed: {{ startup_files_status.stdout_lines }}
+          {{ bashrc_cmp.stdout }}
+        success_msg: "No installer edited the shell startup files"
+
     # Summary
     - name: Summarise mise tool results
       ansible.builtin.set_fact:
