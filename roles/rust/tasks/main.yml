@@ -40,7 +40,9 @@
     - rust
 
 - name: Install Rust via rustup
-  ansible.builtin.command: "{{ home_dir }}/.cache/rustup-init.sh -y"
+  # --no-modify-path: the dotfiles profile already sets up cargo, so rustup
+  # must not append its env line to the tracked shell startup files.
+  ansible.builtin.command: "{{ home_dir }}/.cache/rustup-init.sh -y --no-modify-path"
   environment:
     CARGO_HOME: "{{ rust_cargo_home }}"
     RUSTUP_HOME: "{{ rust_rustup_home }}"
