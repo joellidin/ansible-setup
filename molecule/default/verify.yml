@@ -174,6 +174,66 @@
         fail_msg: "git-credential-libsecret was not built and installed"
         success_msg: "git-credential-libsecret is installed"
 
+    # apt-fast from its PPA, with the preseeded answers in its config
+    - name: Check apt-fast and aria2 are installed
+      ansible.builtin.command: dpkg-query -W -f='${db:Status-Status}' {{ item }}
+      loop:
+        - apt-fast
+        - aria2
+      register: apt_fast_pkg_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify apt-fast and aria2 are installed
+      ansible.builtin.assert:
+        that:
+          - item.stdout == 'installed'
+        fail_msg: "{{ item.item }} is not installed"
+        success_msg: "{{ item.item }} is installed"
+      loop: "{{ apt_fast_pkg_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the apt-fast config
+      ansible.builtin.slurp:
+        src: /etc/apt-fast.conf
+      register: apt_fast_conf
+
+    - name: Verify apt-fast uses the preseeded answers
+      ansible.builtin.assert:
+        that:
+          - (apt_fast_conf.content | b64decode) is search('(?m)^' ~ item ~ '$')
+        fail_msg: "/etc/apt-fast.conf has no '{{ item }}' line"
+        success_msg: "/etc/apt-fast.conf sets {{ item }}"
+      loop:
+        - _APTMGR=apt
+        - _MAXNUM=10
+        - DOWNLOADBEFORE=
+
+    # yubikey-touch-detector must only be installed together with the dotfiles'
+    # drop-in, which keeps it away from the OpenSSH agent socket.
+    - name: Look for the yubikey-touch-detector drop-in
+      ansible.builtin.stat:
+        path: "{{ home_dir }}/.config/systemd/user/yubikey-touch-detector.service.d/no-ssh-proxy.conf"
+      register: touch_detector_dropin
+
+    - name: Check whether yubikey-touch-detector is installed
+      ansible.builtin.command: dpkg-query -W -f='${db:Status-Status}' yubikey-touch-detector
+      register: touch_detector_pkg
+      changed_when: false
+      failed_when: false
+
+    - name: Verify yubikey-touch-detector is installed only with the drop-in
+      ansible.builtin.assert:
+        that:
+          - (touch_detector_pkg.stdout == 'installed') == touch_detector_dropin.stat.exists
+        fail_msg: >-
+          yubikey-touch-detector is {{ touch_detector_pkg.stdout | default('', true) or 'absent' }}
+          but the drop-in {{ 'exists' if touch_detector_dropin.stat.exists else 'is missing' }}
+        success_msg: >-
+          yubikey-touch-detector is {{ 'installed with' if touch_detector_dropin.stat.exists
+          else 'absent without' }} the drop-in
+
     # A check run must not fail when the build directory is missing (a first
     # run, or a cleared ~/.cache): in check mode the copy into it only reports
     # what it would do. The helper itself stays installed.
