@@ -50,6 +50,9 @@
 - name: Install apt-fast for sysup's upgrades
   ansible.builtin.import_tasks: apt-fast.yml
 
+- name: Show a notice while gpg waits for a YubiKey touch
+  ansible.builtin.import_tasks: yubikey-touch.yml
+
 # Synaptics 06cb:0106 on libfprint 1.95.1 has three problems:
 #   - a scan still running when the laptop sleeps never recovers after resume,
 #     so fprint-sleep.service stops fprintd before sleep. Its drop-in runs

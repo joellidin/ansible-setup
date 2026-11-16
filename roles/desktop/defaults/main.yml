@@ -53,6 +53,12 @@ desktop_apt_fast_debconf:
   - {question: apt-fast/maxdownloads, vtype: string, value: "10"}
   - {question: apt-fast/dlflag, vtype: boolean, value: "false"}
 
+# The dotfiles' drop-in that keeps yubikey-touch-detector away from the OpenSSH
+# agent socket; the package is installed only when it exists
+# (tasks/yubikey-touch.yml).
+desktop_touch_detector_dropin: >-
+  {{ config_home }}/systemd/user/yubikey-touch-detector.service.d/no-ssh-proxy.conf
+
 # User units masked so the OpenSSH agent is the session agent (tasks/ssh-agent.yml).
 desktop_masked_user_units:
   - gcr-ssh-agent.socket
