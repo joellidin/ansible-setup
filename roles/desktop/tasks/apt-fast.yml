@@ -1,0 +1,78 @@
+---
+# apt-fast from its Launchpad PPA, for sysup's `apt full-upgrade` (it pulls in
+# aria2, which does the parallel downloads). The postinst writes
+# /etc/apt-fast.conf from the debconf answers on every install and upgrade, so
+# the settings are preseeded rather than templated.
+
+# Same PPA under add-apt-repository's file name; two files make apt list it
+# twice.
+- name: Remove add-apt-repository's copy of the apt-fast PPA
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ desktop_apt_fast_legacy_sources }}"
+  tags:
+    - install
+    - desktop
+
+- name: Add the apt-fast PPA
+  become: true
+  ansible.builtin.deb822_repository:
+    name: apt-fast-ubuntu-ppa
+    types: deb
+    uris: https://ppa.launchpadcontent.net/apt-fast/stable/ubuntu/
+    suites: "{{ distro_release }}"
+    components: main
+    # Ships with the role, like the git-core key (fingerprint in defaults).
+    signed_by: "{{ lookup('ansible.builtin.file', 'apt-fast-ppa.asc') }}"
+    state: present
+  register: desktop_apt_fast_ppa
+  tags:
+    - install
+    - desktop
+
+- name: Refresh apt cache after adding the apt-fast PPA
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: desktop_apt_fast_ppa.changed
+  tags:
+    - install
+    - desktop
+
+- name: Answer apt-fast's install questions
+  become: true
+  ansible.builtin.debconf:
+    name: apt-fast
+    question: "{{ item.question }}"
+    vtype: "{{ item.vtype }}"
+    value: "{{ item.value }}"
+  loop: "{{ desktop_apt_fast_debconf }}"
+  loop_control:
+    label: "{{ item.question }}"
+  register: desktop_apt_fast_answers
+  tags:
+    - install
+    - desktop
+
+- name: Install apt-fast
+  become: true
+  ansible.builtin.apt:
+    name: apt-fast
+    state: present
+  register: desktop_apt_fast_install
+  tags:
+    - install
+    - desktop
+
+# A first install reads the answers itself; an installed apt-fast only rereads
+# them when reconfigured.
+- name: Rewrite apt-fast.conf after an answer changed
+  become: true
+  ansible.builtin.command: dpkg-reconfigure --frontend noninteractive apt-fast
+  when: desktop_apt_fast_answers.changed and not desktop_apt_fast_install.changed
+  changed_when: true
+  tags:
+    - install
+    - desktop

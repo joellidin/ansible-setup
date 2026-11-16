@@ -35,6 +35,24 @@ desktop_packages:
   - libnotify-bin       # notify-send, for the "Touch your YubiKey" notice
   - pciutils            # lspci, to look for the USB-C controllers (below)
 
+# apt-fast's Launchpad PPA (tasks/apt-fast.yml). files/apt-fast-ppa.asc is its
+# signing key; this fingerprint (from
+# https://launchpad.net/api/1.0/~apt-fast/+archive/ubuntu/stable) is the one to
+# check it against if the key ever needs replacing:
+#   gpg --show-keys roles/desktop/files/apt-fast-ppa.asc
+desktop_apt_fast_ppa_fingerprint: BC5934FD3DEBD4DAEA544F791E2824A7F22B44BD
+# The files add-apt-repository creates for the same PPA.
+desktop_apt_fast_legacy_sources:
+  - /etc/apt/sources.list.d/apt-fast-ubuntu-stable-{{ distro_release }}.sources
+  - /etc/apt/sources.list.d/apt-fast-ubuntu-stable-{{ distro_release }}.list
+# apt-fast's debconf answers, as set on the ZBook on 2026-11-07: plain apt as the
+# package manager, 10 parallel downloads, and no confirmation before downloading
+# (DOWNLOADBEFORE empty). The other questions keep their defaults.
+desktop_apt_fast_debconf:
+  - {question: apt-fast/aptmanager, vtype: select, value: apt}
+  - {question: apt-fast/maxdownloads, vtype: string, value: "10"}
+  - {question: apt-fast/dlflag, vtype: boolean, value: "false"}
+
 # User units masked so the OpenSSH agent is the session agent (tasks/ssh-agent.yml).
 desktop_masked_user_units:
   - gcr-ssh-agent.socket
