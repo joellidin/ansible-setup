@@ -4,3 +4,9 @@ all:
     localhost:
       ansible_connection: local
       ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      # Ansible's working files on this machine go under ~/.cache instead of
+      # ~/.ansible/tmp and ~/.ansible_async. They are set for localhost here,
+      # not exported from the shell profile, where they would also apply on
+      # every remote host.
+      ansible_remote_tmp: ~/.cache/ansible/tmp
+      ansible_async_dir: ~/.cache/ansible/async
