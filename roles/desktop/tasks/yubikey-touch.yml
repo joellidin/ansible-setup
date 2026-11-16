@@ -1,0 +1,35 @@
+---
+# yubikey-touch-detector reports when gpg waits for a YubiKey touch, and the
+# dotfiles' yubikey-touch-notify shows a notice for it. The package enables the
+# detector's user units for every user. Its ssh check renames the OpenSSH agent
+# socket and proxies it, so a crashed detector would leave ssh without an agent.
+# The dotfiles' no-ssh-proxy.conf drop-in turns that check off, so the package
+# is installed only once the drop-in is in place (the dotfiles role runs first).
+
+- name: Look for the yubikey-touch-detector drop-in from the dotfiles
+  ansible.builtin.stat:
+    path: "{{ desktop_touch_detector_dropin }}"
+  register: desktop_touch_detector_dropin_stat
+  tags:
+    - install
+    - desktop
+
+- name: Install yubikey-touch-detector
+  become: true
+  ansible.builtin.apt:
+    name: yubikey-touch-detector
+    state: present
+  when: desktop_touch_detector_dropin_stat.stat.exists
+  tags:
+    - install
+    - desktop
+
+- name: Report a missing yubikey-touch-detector drop-in
+  ansible.builtin.debug:
+    msg: >-
+      {{ desktop_touch_detector_dropin }} is missing, so yubikey-touch-detector
+      is not installed. Check out the dotfiles and run the desktop role again.
+  when: not desktop_touch_detector_dropin_stat.stat.exists
+  tags:
+    - install
+    - desktop
