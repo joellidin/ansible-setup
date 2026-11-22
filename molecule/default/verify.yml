@@ -351,6 +351,46 @@
           {{ bashrc_cmp.stdout }}
         success_msg: "No installer edited the shell startup files"
 
+    # The first checkout moves what it replaces into ~/.config-backup and keeps
+    # each file's path: the two profiles from prepare.yml share a name. The
+    # skeleton .profile is hidden, and the backup must keep it too.
+    - name: Compare the backed-up skeleton files with /etc/skel
+      ansible.builtin.command: cmp {{ home_dir }}/.config-backup/{{ item }} /etc/skel/{{ item }}
+      loop:
+        - .profile
+      register: backup_skel_cmp
+      changed_when: false
+      failed_when: false
+
+    - name: Verify the backup holds the skeleton files
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+        fail_msg: "~/.config-backup/{{ item.item }} is missing or differs from /etc/skel"
+        success_msg: "~/.config-backup/{{ item.item }} is the /etc/skel copy"
+      loop: "{{ backup_skel_cmp.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the backed-up profiles from prepare.yml
+      ansible.builtin.slurp:
+        src: "{{ home_dir }}/.config-backup/{{ item }}"
+      loop:
+        - .config/shell/profile
+        - .config/x11/profile
+      register: backup_profiles
+      failed_when: false
+
+    - name: Verify the backup keeps both profiles at their paths
+      ansible.builtin.assert:
+        that:
+          - (item.content | default('') | b64decode | trim) == 'prepared ' ~ item.item
+        fail_msg: "~/.config-backup/{{ item.item }} is missing or holds another file"
+        success_msg: "~/.config-backup/{{ item.item }} is the file prepare.yml made"
+      loop: "{{ backup_profiles.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
     # Summary
     - name: Summarise mise tool results
       ansible.builtin.set_fact:
