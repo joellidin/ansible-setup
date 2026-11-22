@@ -35,13 +35,23 @@
     - install
     - dotfiles
 
+# Every tracked file that already exists in the home moves into the backup,
+# keeping its path relative to the home so same-named files do not collide.
 - name: Backup existing configs
-  ansible.builtin.shell: |
-    /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ dotfiles_home }} checkout 2>&1 |
-    egrep '\s+\.' | awk {'print $1'} |
-    xargs -I{} mv {{ dotfiles_home }}/$(basename {}) {{ dotfiles_backup_dir }}/
-  changed_when: false
-  failed_when: false
+  ansible.builtin.shell:
+    executable: /bin/bash
+    cmd: |
+      set -o pipefail
+      /usr/bin/git --git-dir={{ dotfiles_dir | quote }} ls-tree -r -z --name-only HEAD |
+      while IFS= read -r -d '' f; do
+        if [ -e {{ dotfiles_home | quote }}/"$f" ] || [ -L {{ dotfiles_home | quote }}/"$f" ]; then
+          mkdir -p "$(dirname {{ dotfiles_backup_dir | quote }}/"$f")"
+          mv {{ dotfiles_home | quote }}/"$f" {{ dotfiles_backup_dir | quote }}/"$f"
+          echo "$f"
+        fi
+      done
+  register: dotfiles_backup_moved
+  changed_when: dotfiles_backup_moved.stdout | length > 0
   when: not dotfiles_zshrc.stat.exists
   tags:
     - install
@@ -50,6 +60,8 @@
 - name: Check if backup directory is empty
   ansible.builtin.find:
     paths: "{{ dotfiles_backup_dir }}"
+    file_type: any
+    hidden: true
   register: dotfiles_backup_files
   when: not dotfiles_zshrc.stat.exists
   tags:
@@ -72,7 +84,6 @@
     /usr/bin/git --git-dir={{ dotfiles_dir }}/ --work-tree={{ dotfiles_home }} checkout
   register: dotfiles_checkout
   changed_when: dotfiles_checkout.rc == 0
-  failed_when: false
   when: not dotfiles_zshrc.stat.exists
   tags:
     - install
