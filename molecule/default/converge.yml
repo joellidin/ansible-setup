@@ -30,7 +30,6 @@
     mise_data_dir: "{{ local_share }}/mise"
     mise_shims_dir: "{{ mise_data_dir }}/shims"
     oh_my_zsh_path: "{{ local_src }}/oh-my-zsh"
-    dotfiles_path: "{{ home_dir }}/.dotfiles"
     dotfiles_repo: "https://github.com/joellidin/dotfiles.git"
     neovim_repo: "https://github.com/neovim/neovim.git"
     neovim_version: master
