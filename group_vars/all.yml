@@ -58,7 +58,6 @@ mise_shims_dir: "{{ mise_data_dir }}/shims"
 # -----------------------------------------------------------------------------
 
 oh_my_zsh_path: "{{ local_src }}/oh-my-zsh"
-dotfiles_path: "{{ home_dir }}/.dotfiles"
 nvim_data_path: "{{ local_share }}/nvim"
 gopass_store_path: "{{ local_share }}/gopass/stores/root"
 

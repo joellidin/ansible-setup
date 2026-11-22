@@ -1,0 +1,29 @@
+---
+# Files a home can hold before the dotfiles checkout replaces them. The two
+# profiles share a name, so the backup has to keep their paths apart.
+- name: Prepare
+  hosts: all
+  become: false
+  gather_facts: true
+
+  vars:
+    home_dir: "{{ ansible_facts['env']['HOME'] }}"
+
+  tasks:
+    - name: Create the directories of the files the checkout replaces
+      ansible.builtin.file:
+        path: "{{ home_dir }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - .config/shell
+        - .config/x11
+
+    - name: Create files the checkout replaces
+      ansible.builtin.copy:
+        content: "prepared {{ item }}\n"
+        dest: "{{ home_dir }}/{{ item }}"
+        mode: "0644"
+      loop:
+        - .config/shell/profile
+        - .config/x11/profile

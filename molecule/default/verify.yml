@@ -325,7 +325,9 @@
     # Installers must leave the shell startup files alone. ~/.profile (a link
     # to ~/.config/shell/profile) and ~/.zshenv are tracked in the dotfiles,
     # and the profile already sets up cargo, so a line an installer appends
-    # shows up as a dotfiles change. ~/.bashrc must stay the /etc/skel copy.
+    # shows up as a dotfiles change. The dotfiles role moves the skeleton
+    # ~/.bashrc and ~/.bash_logout into its backup, and nothing may bring
+    # them back.
     - name: Check the dotfiles' shell startup files are unchanged
       ansible.builtin.command: >-
         git --git-dir={{ home_dir }}/.dotfiles --work-tree={{ home_dir }}
@@ -335,21 +337,65 @@
       register: startup_files_status
       changed_when: false
 
-    - name: Check ~/.bashrc is still the /etc/skel copy
-      ansible.builtin.command: cmp {{ home_dir }}/.bashrc /etc/skel/.bashrc
-      register: bashrc_cmp
-      changed_when: false
-      failed_when: false
+    - name: Look for bash startup files in the home directory
+      ansible.builtin.stat:
+        path: "{{ home_dir }}/{{ item }}"
+      loop:
+        - .bashrc
+        - .bash_logout
+      register: bash_startup_files
 
     - name: Verify no installer edited the shell startup files
       ansible.builtin.assert:
         that:
           - startup_files_status.stdout == ''
-          - bashrc_cmp.rc == 0
+          - bash_startup_files.results | selectattr('stat.exists') | list | length == 0
         fail_msg: >-
-          Shell startup files changed: {{ startup_files_status.stdout_lines }}
-          {{ bashrc_cmp.stdout }}
+          Changed: {{ startup_files_status.stdout_lines }}; in the home:
+          {{ bash_startup_files.results | selectattr('stat.exists') | map(attribute='item') | list }}
         success_msg: "No installer edited the shell startup files"
+
+    # The first checkout moves what it replaces into ~/.config-backup and keeps
+    # each file's path: the two profiles from prepare.yml share a name. The
+    # skeleton files are hidden, and the backup must keep those too.
+    - name: Compare the backed-up skeleton files with /etc/skel
+      ansible.builtin.command: cmp {{ home_dir }}/.config-backup/{{ item }} /etc/skel/{{ item }}
+      loop:
+        - .profile
+        - .bashrc
+        - .bash_logout
+      register: backup_skel_cmp
+      changed_when: false
+      failed_when: false
+
+    - name: Verify the backup holds the skeleton files
+      ansible.builtin.assert:
+        that:
+          - item.rc == 0
+        fail_msg: "~/.config-backup/{{ item.item }} is missing or differs from /etc/skel"
+        success_msg: "~/.config-backup/{{ item.item }} is the /etc/skel copy"
+      loop: "{{ backup_skel_cmp.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the backed-up profiles from prepare.yml
+      ansible.builtin.slurp:
+        src: "{{ home_dir }}/.config-backup/{{ item }}"
+      loop:
+        - .config/shell/profile
+        - .config/x11/profile
+      register: backup_profiles
+      failed_when: false
+
+    - name: Verify the backup keeps both profiles at their paths
+      ansible.builtin.assert:
+        that:
+          - (item.content | default('') | b64decode | trim) == 'prepared ' ~ item.item
+        fail_msg: "~/.config-backup/{{ item.item }} is missing or holds another file"
+        success_msg: "~/.config-backup/{{ item.item }} is the file prepare.yml made"
+      loop: "{{ backup_profiles.results }}"
+      loop_control:
+        label: "{{ item.item }}"
 
     # Summary
     - name: Summarise mise tool results
