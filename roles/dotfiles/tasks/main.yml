@@ -57,6 +57,18 @@
     - install
     - dotfiles
 
+# The dotfiles are zsh only, so a new home keeps no bash startup files. The
+# skeleton copies join the backup, with whatever the checkout displaced.
+- name: Move the bash startup files into the backup
+  ansible.builtin.command:
+    cmd: mv {{ dotfiles_home }}/{{ item }} {{ dotfiles_backup_dir }}/{{ item }}
+    removes: "{{ dotfiles_home }}/{{ item }}"
+  loop: "{{ dotfiles_bash_files }}"
+  when: not dotfiles_zshrc.stat.exists
+  tags:
+    - install
+    - dotfiles
+
 - name: Check if backup directory is empty
   ansible.builtin.find:
     paths: "{{ dotfiles_backup_dir }}"
