@@ -15,8 +15,9 @@
 #   --yes              accept the profile's default roles (skips screens 2, 3)
 #
 # Environment:
-#   BOOTSTRAP_REF      git ref to check out, default "main"
-#   BOOTSTRAP_DIR      clone location, default "$HOME/ansible-setup"
+#   BOOTSTRAP_REF      git ref to check out in the main worktree, default "main"
+#   BOOTSTRAP_DIR      where the bare repository and its worktrees go, default
+#                      "$HOME/ansible-setup" (the main worktree is main/ in it)
 #   BOOTSTRAP_REPO     clone URL, default the public GitHub repo
 #   BOOTSTRAP_PROFILE  same as --profile
 #
@@ -34,6 +35,7 @@ BREW_INSTALLER="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.
 
 TMP_DIR=""
 SUDO_PID=""
+CHECKOUT=""
 
 log() { printf '==> %s\n' "$*"; }
 die() { printf 'bootstrap: %s\n' "$*" >&2; exit 1; }
@@ -112,22 +114,46 @@ install_uv() {
   [ -x "$HOME/.local/bin/uv" ] || die "uv installation failed"
 }
 
+# The repository is bare, with one worktree per branch:
+#   $REPO_DIR/.bare   the repository
+#   $REPO_DIR/.git    "gitdir: ./.bare", so git commands work from $REPO_DIR
+#   $REPO_DIR/main    the main worktree, where bootstrap.sh runs
+# A plain clone made before this layout is still updated where it is.
 sync_repo() {
   if [ -d "$REPO_DIR/.git" ]; then
+    CHECKOUT="$REPO_DIR"
+    log "Updating $REPO_DIR (a plain clone; new installs use a bare repository with a main/ worktree)"
+    git -C "$CHECKOUT" fetch --quiet --tags origin
+  elif [ -d "$REPO_DIR/.bare" ]; then
+    CHECKOUT="$REPO_DIR/main"
     log "Updating $REPO_DIR"
     git -C "$REPO_DIR" fetch --quiet --tags origin
+    if [ ! -e "$CHECKOUT/.git" ]; then
+      git -C "$REPO_DIR" worktree prune
+      git -C "$REPO_DIR" worktree add --quiet "$CHECKOUT" main
+    fi
+  elif [ -e "$REPO_DIR" ] && [ -n "$(ls -A "$REPO_DIR")" ]; then
+    die "$REPO_DIR exists and is not an ansible-setup repository; move it or set BOOTSTRAP_DIR"
   else
-    log "Cloning $REPO_URL into $REPO_DIR"
-    git clone --quiet "$REPO_URL" "$REPO_DIR"
+    CHECKOUT="$REPO_DIR/main"
+    log "Cloning $REPO_URL into $REPO_DIR (bare, with the main worktree in main/)"
+    git clone --quiet --bare "$REPO_URL" "$REPO_DIR/.bare"
+    printf 'gitdir: ./.bare\n' >"$REPO_DIR/.git"
+    # A bare clone copies branches straight into local ones. Fetch them as
+    # origin/* instead, so branches can track origin as in a normal clone.
+    git -C "$REPO_DIR" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    git -C "$REPO_DIR" fetch --quiet --tags origin
+    git -C "$REPO_DIR" worktree add --quiet "$CHECKOUT" main
+    git -C "$CHECKOUT" branch --quiet --set-upstream-to=origin/main main
   fi
-  git -C "$REPO_DIR" checkout --quiet "$REF" ||
-    die "cannot check out '$REF' in $REPO_DIR (uncommitted changes or unknown ref?)"
+  git -C "$CHECKOUT" checkout --quiet "$REF" ||
+    die "cannot check out '$REF' in $CHECKOUT (uncommitted changes or unknown ref?)"
   # Fast-forward when REF is a branch with an upstream; tags and commits are left as is.
-  if git -C "$REPO_DIR" symbolic-ref --quiet HEAD >/dev/null 2>&1; then
-    git -C "$REPO_DIR" merge --quiet --ff-only '@{u}' 2>/dev/null ||
+  if git -C "$CHECKOUT" symbolic-ref --quiet HEAD >/dev/null 2>&1; then
+    git -C "$CHECKOUT" merge --quiet --ff-only '@{u}' 2>/dev/null ||
       log "Note: $REF has local changes that are not on origin, leaving it as is"
   fi
-  [ -f "$REPO_DIR/bootstrap.sh" ] || die "$REPO_DIR/bootstrap.sh not found at ref '$REF'"
+  [ -f "$CHECKOUT/bootstrap.sh" ] || die "$CHECKOUT/bootstrap.sh not found at ref '$REF'"
 }
 
 main() {
@@ -151,8 +177,8 @@ main() {
   sync_repo
   trap - EXIT INT TERM
   cleanup
-  log "Handing over to $REPO_DIR/bootstrap.sh"
-  exec bash "$REPO_DIR/bootstrap.sh" install "$@"
+  log "Handing over to $CHECKOUT/bootstrap.sh"
+  exec bash "$CHECKOUT/bootstrap.sh" install "$@"
 }
 
 main "$@"

@@ -12,23 +12,28 @@ curl -fsSL https://get.lidin.ai/bootstrap | sh
 ```
 
 The bootstrap script installs git, curl and uv, clones this repository to
-`~/ansible-setup`, lets you pick a profile and the roles you want in a small
-TUI, and runs the playbook. Non-interactive variants:
+`~/ansible-setup` (see [Layout](#layout)), lets you pick a profile and the
+roles you want in a small TUI, and runs the playbook. Non-interactive variants:
 
 ```bash
 curl -fsSL https://get.lidin.ai/bootstrap | sh -s -- --profile dev --yes
 BOOTSTRAP_REF=v1.0.0 curl -fsSL https://get.lidin.ai/bootstrap | sh
 ```
 
-Profiles live in `profiles.conf`. Re-run `~/ansible-setup/bootstrap.sh update`
+Profiles live in `profiles.conf`. Re-run `~/ansible-setup/main/bootstrap.sh update`
 at any time to pull the repository and update everything you installed.
 
 ### Manual run
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
-git clone https://github.com/joellidin/ansible-setup.git ~/ansible-setup
-cd ~/ansible-setup
+git clone --bare https://github.com/joellidin/ansible-setup.git ~/ansible-setup/.bare
+echo 'gitdir: ./.bare' > ~/ansible-setup/.git
+git -C ~/ansible-setup config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+git -C ~/ansible-setup fetch origin
+git -C ~/ansible-setup worktree add main main
+git -C ~/ansible-setup/main branch --set-upstream-to=origin/main main
+cd ~/ansible-setup/main
 uvx --from 'ansible-core>=2.22,<2.23' ansible-galaxy collection install -r requirements.yml -p collections
 uvx --from 'ansible-core>=2.22,<2.23' ansible-playbook local.yml --ask-become-pass
 ```
@@ -36,6 +41,22 @@ uvx --from 'ansible-core>=2.22,<2.23' ansible-playbook local.yml --ask-become-pa
 Always run Ansible through uvx. Ubuntu 26.04 uses sudo-rs, and the ansible-core
 Ubuntu packages (2.20) cannot read its password prompt, so every privileged task
 times out. ansible-core 2.22 handles it.
+
+### Layout
+
+`~/ansible-setup` is a bare repository with one worktree per branch:
+
+```
+~/ansible-setup/.bare/          the repository
+~/ansible-setup/.git            "gitdir: ./.bare", so git works from ~/ansible-setup
+~/ansible-setup/main/           main, where bootstrap.sh runs
+~/ansible-setup/feat/<name>/    one worktree per branch
+```
+
+Start a branch with `git -C ~/ansible-setup worktree add feat/<name> -b feat/<name> origin/main`.
+Once it is merged, remove it with `git worktree remove` and `git branch -d`. A
+plain clone from before this layout still works with the bootstrap script, which
+updates it where it is.
 
 ## Requirements
 
