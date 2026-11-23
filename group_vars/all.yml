@@ -25,7 +25,7 @@ distro_version: "{{ ansible_facts['distribution_version'] }}"
 # -----------------------------------------------------------------------------
 # GitHub-release tools (go, node, zig, delta, gh, kubectl, vault, gopass)
 # are versioned by mise in ~/.config/mise/config.toml and mise.lock.
-# herdr and Claude Code install once and then update themselves.
+# herdr, Claude Code and Discord install once and then update themselves.
 # Source builds track their repositories (see Git Repositories below).
 
 # -----------------------------------------------------------------------------

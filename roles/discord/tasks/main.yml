@@ -1,0 +1,78 @@
+---
+# Discord role - installs Discord's .deb once; Discord updates itself in
+# ~/.config/discord afterwards. Sign-in is done by hand in the app.
+
+# The status, not the exit code: a package removed but not purged keeps its
+# AppArmor conffile, and dpkg-query still exits 0 for it.
+- name: Check if Discord is installed
+  ansible.builtin.command: dpkg-query -W -f=${Status} discord
+  register: discord_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags:
+    - install
+    - discord
+
+- name: Note that Discord has no .deb for this architecture
+  ansible.builtin.debug:
+    msg: Discord ships a Linux .deb for x86_64 only; skipping it on {{ cpu_arch }}
+  when: cpu_arch != 'x86_64'
+  tags:
+    - install
+    - discord
+
+- name: Install Discord
+  when:
+    - cpu_arch == 'x86_64'
+    - "'install ok installed' not in discord_status.stdout"
+  tags:
+    - install
+    - discord
+  block:
+    - name: Download the Discord .deb
+      ansible.builtin.get_url:
+        url: "{{ discord_deb_url }}"
+        dest: "{{ discord_deb }}"
+        checksum: "{{ discord_deb_checksum }}"
+        mode: "0644"
+        timeout: 60
+      register: discord_download
+      until: discord_download is succeeded
+      retries: 3
+      delay: 5
+
+    # In check mode get_url downloads nothing, so there is no .deb for apt to
+    # read and check mode stops here.
+    - name: Install Discord with apt
+      when: not ansible_check_mode
+      become: true
+      block:
+        - name: Install the dependencies apt cannot pick for the .deb
+          ansible.builtin.apt:
+            name: "{{ discord_deb_prerequisites }}"
+            state: present
+            update_cache: true
+            cache_valid_time: 3600
+
+        # The postinst stops a running Discord and clears its caches in every
+        # /home/*; neither exists before the first install.
+        - name: Install the Discord .deb
+          ansible.builtin.apt:
+            deb: "{{ discord_deb }}"
+            state: present
+
+    - name: Remove the Discord .deb
+      ansible.builtin.file:
+        path: "{{ discord_deb }}"
+        state: absent
+
+  rescue:
+    - name: Report why Discord did not install
+      ansible.builtin.fail:
+        msg: >-
+          Discord {{ discord_version }} did not install:
+          {{ ansible_failed_result.msg | default(ansible_failed_result.stderr | default('')) }}
+          {{ 'Discord no longer serves this build; set discord_version and discord_deb_checksum
+          in roles/discord/defaults/main.yml to a current one.'
+          if (ansible_failed_result.status_code | default(0)) in [403, 404] else '' }}

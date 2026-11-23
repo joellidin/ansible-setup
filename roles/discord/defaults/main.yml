@@ -1,0 +1,25 @@
+---
+# Discord role defaults. The .deb is a small bootstrapper: Discord downloads
+# the app into ~/.config/discord on first start and updates it there itself,
+# without sudo. dpkg keeps listing the version below while the app moves on,
+# so the role installs the package once and has no update step.
+#
+# Discord publishes no checksum and does not sign the .deb, so the sha256 is
+# the one of the file as downloaded on 2026-11-23. To move to a newer build,
+# change both values (the version is in the file name of
+# https://discord.com/api/download?platform=linux&format=deb). Old builds stop
+# being served: on 2026-11-23 the oldest one left at this URL was 1.0.153, from
+# 2026-08-11, and older versions got 403.
+# A bump changes nothing on a machine that already has Discord.
+discord_version: 1.0.170
+discord_deb_checksum: sha256:b57679faa9e3cac1daa7eeea55e9c26b697ce769b5123f88a662ce58184b4807
+discord_deb_url: https://stable.dl2.discordapp.net/distro/app/stable/linux/x64/{{ discord_version }}/Discord.deb
+discord_deb: "{{ cache_home }}/discord-{{ discord_version }}.deb"
+
+# Dependencies of the .deb to install by name first. apt installs a .deb
+# through python-apt, which gives up on a virtual dependency with more than
+# one provider: the .deb depends on libasound2, which libasound2t64 and
+# liboss4-salsa-asound2 both provide on 26.04. Its other virtual dependencies
+# there (libgtk-3-0 and the rest of the t64 renames) have one provider.
+discord_deb_prerequisites:
+  - libasound2t64
