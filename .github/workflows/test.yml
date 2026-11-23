@@ -59,6 +59,24 @@ jobs:
         run: |
           uvx --from 'ansible-core>=2.22,<2.23' ansible-playbook local.yml --syntax-check
 
+  swap:
+    name: Swap Resize
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      # On the runner itself, not in molecule's container: swapon does not
+      # work on a file in a container's overlay filesystem.
+      - name: Resize real swap files with the swap role
+        run: tests/swap/run.sh
+
   idempotence-check:
     name: Idempotence Check
     runs-on: ubuntu-latest

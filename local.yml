@@ -48,6 +48,10 @@
       tags:
         - install
         - core
+    - role: swap
+      tags:
+        - install
+        - swap
     - role: dotfiles
       tags:
         - install

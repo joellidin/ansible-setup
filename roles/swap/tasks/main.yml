@@ -1,0 +1,182 @@
+---
+# swap role - keeps the swap file at the size set for this machine (see
+# defaults). A machine without a size is left alone. The role never creates
+# swap, edits /etc/fstab or sets kernel parameters.
+
+- name: Resize the swap file to the size set for this machine
+  when: swap_size | length > 0
+  block:
+    # Read at run time, without root: a host whose swap already has the size
+    # changes nothing and needs no sudo.
+    - name: Read the active swap areas
+      ansible.builtin.slurp:
+        src: /proc/swaps
+      register: swap_proc_swaps
+
+    - name: Look at the swap file
+      ansible.builtin.stat:
+        path: "{{ swap_file }}"
+        get_checksum: false
+        get_mime: false
+        get_attributes: false
+      register: swap_file_stat
+
+    # /proc/swaps lists sizes one page short of the file, so the size check
+    # uses the file's byte size from stat.
+    - name: Work out the swap file's state
+      ansible.builtin.set_fact:
+        swap_want_bytes: "{{ swap_size | human_to_bytes | int }}"
+        swap_active: "{{ swap_entry | length > 0 }}"
+        swap_used_kib: "{{ swap_entry[3] | default(0) | int }}"
+      vars:
+        swap_entry: >-
+          {{ (swap_proc_swaps.content | b64decode).splitlines()[1:]
+             | map('split') | selectattr('0', 'equalto', swap_file)
+             | first | default([]) }}
+
+    - name: Report a swap file that is missing or not active
+      ansible.builtin.debug:
+        msg: >-
+          {{ swap_file }} is {{ 'not active swap' if swap_file_stat.stat.exists else 'missing' }},
+          so its size ({{ swap_size }}) is not applied. The role does not create swap.
+      when: not (swap_file_stat.stat.exists and swap_active | bool)
+
+    - name: Resize the active swap file
+      when:
+        - swap_file_stat.stat.exists
+        - swap_active | bool
+        - swap_file_stat.stat.size | int != swap_want_bytes | int
+      block:
+        - name: Show the resize
+          ansible.builtin.debug:
+            msg: >-
+              Resizing {{ swap_file }} from {{ swap_file_stat.stat.size | human_readable }}
+              to {{ swap_want_bytes | int | human_readable }}
+              ({{ ((swap_used_kib | int) * 1024) | human_readable }} of it in use).
+
+        - name: Read the free space beside the swap file
+          ansible.builtin.command:
+            argv: [df, -B1, --output=avail, "{{ swap_file | dirname }}"]
+          register: swap_df
+          changed_when: false
+          check_mode: false
+
+        - name: Read the available memory
+          ansible.builtin.slurp:
+            src: /proc/meminfo
+          register: swap_meminfo
+
+        - name: Check there is room for the new swap file
+          ansible.builtin.assert:
+            that: swap_free_bytes | int >= swap_need_bytes | int
+            fail_msg: >-
+              Not resizing {{ swap_file }}: the new file needs {{ swap_need_bytes | int | human_readable }}
+              free (with a {{ swap_resize_disk_margin }} margin), and {{ swap_free_bytes | int | human_readable }}
+              is free. The old swap is unchanged.
+            quiet: true
+          vars:
+            swap_free_bytes: "{{ swap_df.stdout_lines[-1] | trim }}"
+            swap_need_bytes: "{{ swap_want_bytes | int + swap_resize_disk_margin | human_to_bytes }}"
+
+        - name: Check the old swap fits into memory
+          ansible.builtin.assert:
+            that: swap_mem_available_kib | int > swap_used_kib | int + swap_ram_margin_kib | int
+            fail_msg: >-
+              Not resizing {{ swap_file }}: emptying it needs its {{ swap_used_kib }} kB in use plus
+              {{ swap_resize_ram_margin }} of available memory, and {{ swap_mem_available_kib }} kB is available.
+              The old swap is unchanged.
+            quiet: true
+          vars:
+            swap_ram_margin_kib: "{{ (swap_resize_ram_margin | human_to_bytes / 1024) | int }}"
+            swap_mem_available_kib: >-
+              {{ ((swap_meminfo.content | b64decode).splitlines()
+                 | select('match', 'MemAvailable:') | first | split)[1] }}
+
+        - name: Replace the swap file
+          become: true
+          environment:
+            SWAP_FILE: "{{ swap_file }}"
+            SWAP_BYTES: "{{ swap_want_bytes }}"
+            SWAP_MARGIN_KIB: "{{ (swap_resize_ram_margin | human_to_bytes / 1024) | int }}"
+          block:
+            # The new file is built beside the old one, so a failure here leaves
+            # the old swap active and untouched.
+            - name: Build the new swap file
+              ansible.builtin.shell:
+                executable: /bin/sh
+                cmd: |
+                  set -eu
+                  rm -f "$SWAP_FILE.new" "$SWAP_FILE.old"
+                  fallocate -l "$SWAP_BYTES" "$SWAP_FILE.new"
+                  chmod 600 "$SWAP_FILE.new"
+                  mkswap "$SWAP_FILE.new" >/dev/null
+              changed_when: true
+
+            # One task, so nothing can stop between turning the old swap off
+            # and turning the new one on. The old file is kept as a hard link
+            # until the new one is active. A failure puts it back and turns it
+            # on again. The swap file's path exists at every point, as
+            # /etc/fstab expects.
+            - name: Switch to the new swap file
+              ansible.builtin.shell:
+                executable: /bin/sh
+                cmd: |
+                  set -eu
+                  f=$SWAP_FILE
+                  # Check again right before emptying the old swap.
+                  avail=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+                  used=$(awk -v f="$f" '$1 == f {print $4}' /proc/swaps)
+                  if [ -z "$used" ]; then
+                    echo "$f is no longer active swap" >&2
+                    exit 1
+                  fi
+                  if [ "$avail" -le $((used + SWAP_MARGIN_KIB)) ]; then
+                    echo "not enough memory to empty $f: $used kB in use, $avail kB available" >&2
+                    exit 1
+                  fi
+                  swapoff "$f"
+                  restore() {
+                    trap - INT TERM HUP
+                    if [ -e "$f.old" ]; then mv -f "$f.old" "$f" || true; fi
+                    rm -f "$f.new"
+                    if swapon "$f"; then
+                      echo "$1; the old swap file is active again" >&2
+                    else
+                      echo "$1, and $f could not be turned on again" >&2
+                    fi
+                    exit 1
+                  }
+                  trap 'restore "interrupted while switching swap files"' INT TERM HUP
+                  ln "$f" "$f.old" || restore "could not keep the old swap file"
+                  mv -f "$f.new" "$f" || restore "could not move the new swap file into place"
+                  swapon "$f" || restore "could not turn on the new swap file"
+                  trap - INT TERM HUP
+                  rm -f "$f.old"
+              changed_when: true
+          rescue:
+            - name: Remove the unused new swap file
+              ansible.builtin.file:
+                path: "{{ swap_file }}.new"
+                state: absent
+
+            - name: Read the active swap areas after the failure
+              ansible.builtin.slurp:
+                src: /proc/swaps
+              register: swap_proc_swaps_after
+
+            # Only if the switch was killed before it could restore the old file.
+            - name: Turn the swap file back on
+              ansible.builtin.command:
+                argv: [swapon, "{{ swap_file }}"]
+              changed_when: true
+              failed_when: false
+              when: >-
+                (swap_proc_swaps_after.content | b64decode).splitlines()[1:]
+                | map('split') | selectattr('0', 'equalto', swap_file) | list | length == 0
+
+            - name: Stop after the failed resize
+              ansible.builtin.fail:
+                msg: >-
+                  Resizing {{ swap_file }} failed:
+                  {{ ansible_failed_result.stderr | default('')
+                     or ansible_failed_result.msg | default('unknown error') }}
