@@ -1,0 +1,28 @@
+---
+# The swap file the role resizes. Ubuntu's installer creates /swap.img and its
+# /etc/fstab line; the role uses both as they are.
+swap_file: /swap.img
+
+# Swap size per machine model, matched as a substring of the DMI product name
+# (like desktop_pcie_aspm_off_models). A model that is not listed keeps its
+# swap as it is.
+swap_size_by_model:
+  # 92 GiB of RAM, and /tmp is a tmpfs whose pages leave RAM only through swap.
+  # No hibernation (s2idle), so swap does not need to cover RAM. Chosen
+  # 2026-11-22.
+  HP ZBook Ultra G1a: 64G
+
+# The size for this machine, in human_to_bytes form (64G is 64 GiB), or "" to
+# leave swap alone. Pass it with -e to override the model table.
+swap_size: >-
+  {{ swap_size_by_model | dict2items
+     | selectattr('key', 'in', ansible_facts['product_name'] | default(''))
+     | map(attribute='value') | first | default('') }}
+
+# A resize empties the old swap into RAM first. It goes ahead only when
+# MemAvailable exceeds the old swap's use by this margin.
+swap_resize_ram_margin: 4G
+
+# Free space needed beyond the new file on the swap file's filesystem, while
+# the old and the new file both exist.
+swap_resize_disk_margin: 1G

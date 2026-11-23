@@ -79,6 +79,7 @@ rewrites `mise.lock`, which you then commit in the dotfiles.
 | `picom` | picom compositor from source | yes |
 | `python` | Python via uv | yes |
 | `rust` | Rust via rustup | yes |
+| `swap` | Resizes `/swap.img` to the size set for the machine model (64 GiB on the ZBook Ultra G1a); other machines keep their swap | no |
 | `tmux` | tmux master from source | yes |
 | `zsh` | zsh, Oh My Zsh, plugins and Starship | no |
 

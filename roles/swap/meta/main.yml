@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: joellidin
+  description: Keep the swap file at the size set for this machine model
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - swap
+
+dependencies: []
