@@ -1,0 +1,12 @@
+---
+# Runs the swap role on its own. tests/swap/run.sh passes the swap file and
+# the size with -e, and swap_test_bin to put its failing stand-ins for ln and
+# swapon first on PATH.
+- name: Resize a swap file with the swap role
+  hosts: localhost
+  gather_facts: false
+  environment: >-
+    {{ {'PATH': swap_test_bin ~ ':/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}
+       if swap_test_bin is defined else {} }}
+  roles:
+    - role: swap
