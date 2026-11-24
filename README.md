@@ -87,6 +87,7 @@ rewrites `mise.lock`, which you then commit in the dotfiles.
 | `claude_code` | Claude Code CLI via its native installer | yes |
 | `core` | Build dependencies and fonts (JetBrains Mono and Symbols Nerd Fonts) | no |
 | `desktop` | i3, rofi and the X11 desktop tool set, git from the git-core PPA, apt-fast from its PPA, yubikey-touch-detector once the dotfiles' drop-in is in place, and fprintd workarounds for fingerprint sensors that fail after a suspend or on the first scan; builds git's libsecret credential helper, purges sssd, disables unused services and the firmware-updater snap, sets `pcie_aspm=off` on the ZBook Ultra G1a, and masks GNOME's and gpg-agent's SSH agents so the OpenSSH agent is the session agent | no |
+| `discord` | Discord desktop app from Discord's .deb, installed once; it updates itself in `~/.config/discord`, and sign-in is by hand | no |
 | `docker` | Docker Engine, Buildx and Compose from Docker's repository | no |
 | `dotfiles` | Dotfiles bare repository checkout | no |
 | `ghostty` | Ghostty terminal from the mkasberg deb releases | yes |

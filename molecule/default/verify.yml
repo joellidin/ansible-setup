@@ -397,6 +397,20 @@
       loop_control:
         label: "{{ item.item }}"
 
+    # Verify Discord
+    - name: Check the discord package
+      ansible.builtin.command: dpkg-query -W -f=${Status} discord
+      register: discord_check
+      changed_when: false
+      failed_when: false
+
+    - name: Verify Discord installation
+      ansible.builtin.assert:
+        that:
+          - "'install ok installed' in discord_check.stdout"
+        fail_msg: "The discord package is not installed: {{ discord_check.stdout }}{{ discord_check.stderr }}"
+        success_msg: "The discord package is installed"
+
     # Summary
     - name: Summarise mise tool results
       ansible.builtin.set_fact:
@@ -413,3 +427,4 @@
           - Zen: {{ 'OK' if zen_check.stat.exists else 'FAILED' }}
           - GPG key: {{ 'OK' if gpg_key_check.rc == 0 else 'FAILED' }}
           - libsecret helper: {{ 'OK' if libsecret_helper.stat.exists else 'FAILED' }}
+          - Discord: {{ 'OK' if 'install ok installed' in discord_check.stdout else 'FAILED' }}

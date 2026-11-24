@@ -244,3 +244,12 @@
             - herdr
       tags:
         - herdr
+
+    - name: Include discord role
+      ansible.builtin.include_role:
+        name: "{{ project_root }}/roles/discord"
+        apply:
+          tags:
+            - discord
+      tags:
+        - discord

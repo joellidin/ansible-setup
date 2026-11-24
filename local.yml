@@ -120,6 +120,12 @@
       tags:
         - install
         - herdr
+    # Last: Discord stops serving old builds (roles/discord/defaults/main.yml),
+    # so a stale pin fails here after everything else is installed.
+    - role: discord
+      tags:
+        - install
+        - discord
   post_tasks:
     - name: Upgrade apt packages
       become: true
